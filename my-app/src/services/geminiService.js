@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY, //in your .env file kept outside the src file and store VITE_GEMINI_API_KEY="Your Api key"
 });
 
 /**
