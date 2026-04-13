@@ -24,4 +24,4 @@ dist-ssr
 *.sln
 *.sw?
 .env
-.ApiREADME.md
+backend/ApiREADME.md
