@@ -59,7 +59,7 @@ app.post("/api/verify-cleaning", async (req, res) => {
   try {
     const apiKey =
       process.env.GROQ_API_KEY ||
-      process.env.GROK_API_KEY;
+      process.env.GROK_API_KEY || your ;
 
     if (!apiKey) {
       return res.status(500).json({
