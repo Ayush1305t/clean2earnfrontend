@@ -145,3 +145,4 @@ app.post("/api/verify-cleaning", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
 });
+

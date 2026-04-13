@@ -1,5 +1,6 @@
-import { Trophy, Camera, Sparkles, ArrowRight, Leaf } from "lucide-react";
+import { Trophy, Camera, Sparkles, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import SiteNavbar from "../component/SiteNavbar";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -24,29 +25,7 @@ const Home = () => {
         <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-green-500/3 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "4s" }} />
       </div>
 
-      {/* NAVBAR */}
-      <nav className="relative flex justify-between items-center px-8 py-6 border-b border-gray-700/30 backdrop-blur-lg bg-black/40 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
-            <Leaf size={22} className="text-white" />
-          </div>
-          <h1 className="text-2xl font-black tracking-tight">
-            <span className="bg-gradient-to-r from-green-300 via-emerald-400 to-green-400 bg-clip-text text-transparent">Clean2Earn</span>
-          </h1>
-        </div>
-
-        <div className="hidden md:flex gap-10 text-sm font-medium">
-          <p onClick={() => navigate("/")} className="text-gray-400 hover:text-green-300 cursor-pointer transition-colors duration-300">Home</p>
-          <p onClick={() => navigate("/dashboard")} className="text-gray-400 hover:text-green-300 cursor-pointer transition-colors duration-300">Dashboard</p>
-          <p className="text-gray-400 hover:text-green-300 cursor-pointer transition-colors duration-300">Impact</p>
-          <p className="text-gray-400 hover:text-green-300 cursor-pointer transition-colors duration-300">Leaderboard</p>
-          <p className="text-gray-400 hover:text-green-300 cursor-pointer transition-colors duration-300">Rewards</p>
-        </div>
-
-        <button className="bg-gradient-to-r from-green-400 to-emerald-500 text-black px-6 py-2.5 rounded-lg font-bold hover:from-green-300 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-green-500/40 active:scale-95 text-sm">
-          Sign In
-        </button>
-      </nav>
+      <SiteNavbar active="Home" ctaLabel="Sign In" ctaPath="/dashboard" />
 
       {/* HERO SECTION */}
       <div className="relative flex flex-col items-center justify-center text-center min-h-[calc(100vh-95px)] px-4 py-12 z-10">

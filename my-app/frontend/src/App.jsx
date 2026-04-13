@@ -1,7 +1,7 @@
 import CleaningValidationPage from "./pages/CleaningValidationPage";
 import CleaningFlow from "./pages/CleaningFlow";
 import Home from "./pages/Home";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {

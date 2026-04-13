@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Camera, CheckCircle, XCircle, AlertTriangle, MapPin, Clock, Loader2, RotateCcw, Trophy, ArrowRight, Leaf } from "lucide-react";
+import { Camera, CheckCircle, XCircle, AlertTriangle, MapPin, Clock, Loader2, RotateCcw, Trophy, ArrowRight } from "lucide-react";
 import useCamera from "../hooks/useCamera";
 import { grokService } from "../services/grokService";
 import { useNavigate } from "react-router-dom";
+import SiteNavbar from "../component/SiteNavbar";
 
 // ─── Step indicator ───────────────────────────────────────────
 const steps = ["Before", "After", "Verify", "Done"];
@@ -333,7 +334,7 @@ const DoneStep = ({ result, beforePhoto, afterPhoto }) => {
         <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/10 border border-green-500/40 backdrop-blur-md rounded-2xl px-8 py-8 mb-10 w-full shadow-lg shadow-green-500/10">
           <p className="text-gray-300 text-sm mb-2 uppercase tracking-widest font-bold">Coins Earned</p>
           <p className="text-7xl font-black text-transparent bg-gradient-to-r from-green-300 to-emerald-400 bg-clip-text">+{coins}</p>
-          <p className="text-gray-400 text-base mt-3 font-medium">SwachhCoins added to your account</p>
+          <p className="text-gray-400 text-base mt-3 font-medium">Clean2Earn coins added to your account</p>
         </div>
       )}
 
@@ -413,19 +414,17 @@ const CleaningFlow = () => {
         <div className="absolute bottom-1/3 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
       </div>
 
-      {/* Navbar */}
-      <nav className="relative flex justify-between items-center px-8 py-5 border-b border-gray-700/30 backdrop-blur-lg bg-black/40 sticky top-0 z-50">
-        <button onClick={() => navigate("/")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <Leaf size={24} className="text-green-300" />
-          <span className="text-xl font-black tracking-tight">
-            <span className="bg-gradient-to-r from-green-300 to-emerald-400 bg-clip-text text-transparent">SwachhCoin</span>
-          </span>
-        </button>
-        <div className="flex items-center gap-3 text-xs font-bold text-green-300 bg-green-500/15 border border-green-500/40 backdrop-blur-md px-4 py-2 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-green-300 animate-pulse" />
-          Live Camera Mode
-        </div>
-      </nav>
+      <SiteNavbar
+        active="Clean"
+        ctaLabel="Dashboard"
+        ctaPath="/dashboard"
+        rightSlot={
+          <div className="hidden items-center gap-3 rounded-full border border-green-500/40 bg-green-500/15 px-4 py-2 text-xs font-bold text-green-300 backdrop-blur-md md:flex">
+            <div className="h-2 w-2 rounded-full bg-green-300 animate-pulse" />
+            Live Camera Mode
+          </div>
+        }
+      />
 
       {/* Content */}
       <div className="relative px-4 py-12 z-10">
