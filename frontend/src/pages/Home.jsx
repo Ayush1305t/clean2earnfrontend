@@ -1,111 +1,115 @@
-import { Trophy, Camera, Sparkles, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import SiteNavbar from "../component/SiteNavbar";
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles, Target, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import HeroAnimation from '../components/HeroAnimation';
 
 const Home = () => {
-  const navigate = useNavigate();
   return (
-    <div className="bg-black text-white min-h-screen overflow-hidden relative">
-      
-      <div 
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="grad1" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%234ade80;stop-opacity:0.05"/><stop offset="100%25" style="stop-color:%2310b981;stop-opacity:0.02"/></linearGradient></defs><rect width="1200" height="800" fill="url(%23grad1)"/><path opacity="0.03" d="M0,400 Q300,300 600,400 T1200,400 L1200,800 L0,800 Z" fill="%234ade80"/><circle cx="100" cy="150" r="80" fill="%2310b981" opacity="0.02"/><circle cx="1100" cy="250" r="120" fill="%234ade80" opacity="0.02"/><circle cx="600" cy="100" r="100" fill="%2310b981" opacity="0.015"/></svg>')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      />
-
-      <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black/80 pointer-events-none" />
-
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-40 h-40 bg-green-500/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-32 right-16 w-56 h-56 bg-emerald-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
-        <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-green-500/3 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "4s" }} />
-      </div>
-
-      <SiteNavbar active="Home" ctaLabel="Sign In" ctaPath="/dashboard" />
-
-      {/* HERO SECTION */}
-      <div className="relative flex flex-col items-center justify-center text-center min-h-[calc(100vh-95px)] px-4 py-12 z-10">
-        
-        <div className="mb-10 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/15 border border-green-500/40 backdrop-blur-lg hover:bg-green-500/20 transition-all duration-300">
-          <Sparkles size={16} className="text-green-300 animate-spin" style={{ animationDuration: "3s" }} />
-          <span className="text-sm font-semibold text-green-300">Verified by AI Technology</span>
-        </div>
-
-        <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight tracking-tight">
-          <span className="text-white">Clean Environment.</span>
-          <br />
-          <span className="bg-gradient-to-r from-green-300 via-emerald-400 to-green-400 bg-clip-text text-transparent">Earn & Impact.</span>
-        </h1>
-
-        <p className="text-gray-300 text-lg md:text-xl mb-12 max-w-3xl leading-relaxed font-medium">
-          Contribute to a cleaner India. Capture verified cleanup activities, get rewarded with coins, and make a real environmental difference.
-        </p>
-
-        <div className="grid grid-cols-3 gap-6 mb-14 w-full max-w-xl">
-          <div className="group relative bg-gradient-to-br from-gray-800/40 to-gray-900/40 border border-gray-700/50 rounded-xl p-5 backdrop-blur-md hover:border-green-500/50 hover:bg-gray-800/60 transition-all duration-300">
-            <div className="relative">
-              <div className="text-3xl font-black text-green-300">2.5M+</div>
-              <div className="text-xs text-gray-400 font-medium mt-1">Active Contributors</div>
-            </div>
-          </div>
-          <div className="group relative bg-gradient-to-br from-gray-800/40 to-gray-900/40 border border-gray-700/50 rounded-xl p-5 backdrop-blur-md hover:border-green-500/50 hover:bg-gray-800/60 transition-all duration-300">
-            <div className="relative">
-              <div className="text-3xl font-black text-green-300">500K+</div>
-              <div className="text-xs text-gray-400 font-medium mt-1">Areas Cleaned</div>
-            </div>
-          </div>
-          <div className="group relative bg-gradient-to-br from-gray-800/40 to-gray-900/40 border border-gray-700/50 rounded-xl p-5 backdrop-blur-md hover:border-green-500/50 hover:bg-gray-800/60 transition-all duration-300">
-            <div className="relative">
-              <div className="text-3xl font-black text-green-300">98%</div>
-              <div className="text-xs text-gray-400 font-medium mt-1">Accuracy Rate</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 w-full max-w-md mb-16">
-          <button 
-            onClick={() => navigate("/clean")}
-            className="group relative flex-1 bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold py-4 px-8 rounded-xl hover:from-green-300 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-green-500/50 active:scale-95 flex items-center justify-center gap-3 overflow-hidden"
+    <div className="flex flex-col items-center w-full">
+      {/* Hero Section */}
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24 flex flex-col-reverse lg:flex-row items-center gap-16">
+        <div className="flex-1 space-y-8 z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <Camera size={22} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-            <span className="relative z-10 font-bold">Start Cleaning</span>
-            <ArrowRight size={20} className="relative z-10 group-hover:translate-x-2 transition-all duration-300 ease-out" />
-          </button>
-
-          <button 
-            onClick={() => navigate("/dashboard")}
-            className="group flex-1 border-2 border-green-400/60 text-green-300 font-bold py-4 px-8 rounded-xl hover:border-green-400 hover:text-green-200 hover:bg-green-500/10 transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 backdrop-blur-sm"
+            <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.1]">
+              Clean the <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-indigo-500">World</span>, <br />
+              Earn <span className="text-pink-500 dark:text-pink-400 text-glow">Rewards</span>.
+            </h1>
+            <p className="mt-6 text-xl text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+              Join the AI-powered movement addressing environmental cleanliness. 
+              Verify your cleanups, earn digital coins, and redeem them for exclusive rewards.
+            </p>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-wrap gap-4"
           >
-            <Trophy size={22} className="group-hover:scale-110 transition-transform duration-300" />
-            Dashboard
-          </button>
+            <Link to="/upload" className="px-8 py-4 rounded-xl bg-pink-500 hover:bg-pink-600 dark:bg-pink-500 dark:hover:bg-pink-400 text-white font-bold text-lg shadow-lg dark:shadow-pink-500/20 transition-all flex items-center gap-2 hover:-translate-y-1">
+              Start Earning
+              <ArrowRight size={20} />
+            </Link>
+            <Link to="/impact" className="px-8 py-4 rounded-xl glass hover:bg-white/40 dark:hover:bg-white/10 font-bold text-lg transition-all flex items-center gap-2 hover:-translate-y-1 text-slate-900 dark:text-white">
+              View Impact
+            </Link>
+            <Link to="/join-beta" className="px-8 py-4 rounded-xl border-2 border-slate-200 dark:border-white/10 glass hover:border-pink-500 dark:hover:border-pink-500 font-bold text-lg transition-all flex items-center gap-2 hover:-translate-y-1 text-slate-900 dark:text-white group">
+              Join Beta
+              <Sparkles size={20} className="text-pink-500 group-hover:animate-pulse" />
+            </Link>
+          </motion.div>
         </div>
 
-        <div className="w-full max-w-4xl">
-          <p className="text-gray-400 text-sm font-semibold uppercase tracking-widest mb-8">How it Works</p>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="group p-6 rounded-xl bg-gradient-to-br from-gray-800/30 to-gray-900/30 border border-gray-700/50 hover:border-green-500/40 backdrop-blur-md transition-all duration-300">
-              <div className="text-5xl mb-4">📸</div>
-              <h3 className="font-bold text-lg mb-2 text-white">Capture Reality</h3>
-              <p className="text-sm text-gray-400">Take high-quality before & after photos using your device camera</p>
-            </div>
-            <div className="group p-6 rounded-xl bg-gradient-to-br from-gray-800/30 to-gray-900/30 border border-gray-700/50 hover:border-green-500/40 backdrop-blur-md transition-all duration-300">
-              <div className="text-5xl mb-4">🤖</div>
-              <h3 className="font-bold text-lg mb-2 text-white">AI Verification</h3>
-              <p className="text-sm text-gray-400">Our Grok vision check analyzes images for genuine cleanup proof</p>
-            </div>
-            <div className="group p-6 rounded-xl bg-gradient-to-br from-gray-800/30 to-gray-900/30 border border-gray-700/50 hover:border-green-500/40 backdrop-blur-md transition-all duration-300">
-              <div className="text-5xl mb-4">🎁</div>
-              <h3 className="font-bold text-lg mb-2 text-white">Get Rewards</h3>
-              <p className="text-sm text-gray-400">Earn coins instantly and redeem for exclusive rewards</p>
-            </div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, type: "spring" }}
+          className="flex-1 w-full flex justify-center lg:justify-end xl:mr-10 relative"
+        >
+          {/* Decorative glow behind the animation */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-pink-400/20 dark:bg-pink-500/10 blur-[100px] rounded-full z-[-1]" />
+          <HeroAnimation />
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section className="w-full py-24 bg-white/30 dark:bg-black/20 mt-12 backdrop-blur-md border-y border-black/5 dark:border-white/5 relative overflow-hidden">
+        {/* Subtle patterned background */}
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-5xl font-bold text-slate-950 dark:text-white mb-6"
+            >
+              How it works
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto"
+            >
+              Three simple steps to make a measurable difference and get rewarded for your efforts in maintaining a cleaner environment.
+            </motion.p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { icon: Target, title: "1. Capture & Verify", desc: "Take before and after photos of your cleanup. Our AI verifies authenticity preventing misuse." },
+              { icon: Award, title: "2. Earn Coins", desc: "Get rewarded instantly with Eco-Coins for your verified positive real-world actions." },
+              { icon: Sparkles, title: "3. Redeem Rewards", desc: "Use your hard-earned coins for exclusive discounts and perks from eco-friendly partners." }
+            ].map((feature, idx) => (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.2 }}
+                className="glass p-10 rounded-3xl relative overflow-hidden group hover:-translate-y-3 transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-400 to-indigo-500 flex items-center justify-center mb-8 text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+                  <feature.icon size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-950 dark:text-white mb-4">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{feature.desc}</p>
+                
+                {/* Decorative background element */}
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-pink-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-500" />
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
