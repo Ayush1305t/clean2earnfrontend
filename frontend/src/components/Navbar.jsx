@@ -1,94 +1,279 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, Sun, Moon, Leaf } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Menu, X, Leaf, Sparkles } from 'lucide-react';
+
+import realLeaf from '../assets/logo/real-leaf.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScroll = window.scrollY;
+      setScrollY(currentScroll);
+      setScrolled(currentScroll > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Calculate navbar width based on scroll position
+  // At 0px scroll: 100% width
+  // At 500px scroll: 85% width
+  // Beyond 500px: stays at 85% width
+  const navWidth = 100;
+  const borderRadius = 0;
 
   const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Upload', path: '/upload' },
-    { name: 'Impact', path: '/impact' },
-    { name: 'Contact', path: '/contact' },
+    { name: 'Home', path: '/', icon: '🌍' },
+    { name: 'Dashboard', path: '/dashboard', icon: '📊' },
+    { name: 'Upload', path: '/upload', icon: '📤' },
+    { name: 'Impact', path: '/impact', icon: '🌱' },
+    { name: 'Contact', path: '/contact', icon: '💬' },
   ];
 
   return (
-    <nav className="fixed top-0 w-full z-50 glass border-b border-black/5 dark:border-white/10 shadow-sm transition-all duration-300">
+    <motion.nav 
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+      style={{
+        width: `${navWidth}%`,
+        borderRadius: `${borderRadius}px`,
+        background: scrolled 
+          ? 'linear-gradient(135deg, rgba(248, 254, 254, 0.85) 0%, rgba(135, 206, 235, 0.12) 50%, rgba(144, 238, 144, 0.1) 100%)'
+          : 'linear-gradient(135deg, rgba(248, 254, 254, 0.70) 0%, rgba(135, 206, 235, 0.08) 50%, rgba(144, 238, 144, 0.06) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: scrolled 
+          ? '2px solid rgba(135, 206, 235, 0.4)' 
+          : '1.5px solid rgba(135, 206, 235, 0.25)',
+        boxShadow: scrolled
+          ? '0 12px 50px rgba(135, 206, 235, 0.2), 0 0 30px rgba(144, 238, 144, 0.1)'
+          : '0 8px 32px rgba(135, 206, 235, 0.08), 0 0 20px rgba(144, 238, 144, 0.05)',
+      }}
+      animate={{
+        y: 0,
+      }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Animated gradient line on top */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-full"
+        style={{
+          background: 'linear-gradient(90deg, transparent, #90EE90, #87CEEB, transparent)',
+          opacity: 0.6,
+        }}
+        animate={{
+          opacity: [0.4, 0.8, 0.4],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Logo Section */}
           <div className="flex-shrink-0">
-            <NavLink to="/" className="flex items-center gap-2 group">
-              <div className="p-2 rounded-xl bg-primary-light/10 dark:bg-primary-light/20 text-emerald-500 dark:text-primary-light group-hover:scale-110 transition-transform">
-                <Leaf size={24} className="dark:text-glow" />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">
-                Clean<span className="text-emerald-500 dark:text-primary-light">2</span>Earn
-              </span>
+            <NavLink 
+              to="/" 
+              className="flex items-center gap-3 group relative"
+            >
+              {/* Animated glow behind logo */}
+              <motion.div
+                className="absolute -inset-2 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(144, 238, 144, 0.4), rgba(135, 206, 235, 0.3))',
+                }}
+              />
+
+              <motion.div 
+                className="p-1.5 rounded-xl relative z-10 overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.2), rgba(144, 238, 144, 0.15))',
+                  border: '1px solid rgba(144, 238, 144, 0.35)',
+                  boxShadow: '0 0 15px rgba(144, 238, 144, 0.2), inset 0 0 8px rgba(135, 206, 235, 0.1)',
+                }}
+                whileHover={{ 
+                  scale: 1.1,
+                  boxShadow: '0 0 25px rgba(144, 238, 144, 0.4), inset 0 0 12px rgba(135, 206, 235, 0.2)',
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+              >
+                <motion.div
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-8 h-8 flex items-center justify-center"
+                >
+                  <img src={realLeaf} alt="Logo" className="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]" />
+                </motion.div>
+              </motion.div>
+
+              <motion.div 
+                className="relative z-10 hidden sm:block"
+                animate={{ scale: scrollY > 200 ? 0.85 : 1 }}
+              >
+                <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-blue-dark bg-clip-text text-transparent">
+                  Clean<span className="text-emerald-500">2</span>Earn
+                </span>
+                <motion.div 
+                  className="h-[2px] bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-full mt-1 origin-left"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.4 }}
+                />
+              </motion.div>
             </NavLink>
           </div>
           
           {/* Desktop Menu */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-2">
-              {navLinks.map((link) => (
+            <div className="ml-10 flex items-center space-x-1">
+              {navLinks.map((link, index) => (
                 <NavLink
                   key={link.name}
                   to={link.path}
                   className={({ isActive }) =>
-                    `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative ${
-                      isActive
-                        ? 'text-emerald-600 dark:text-primary-light bg-black/5 dark:bg-white/10'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-primary-light hover:bg-black/5 dark:hover:bg-white/5'
-                    }`
+                    `px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 relative group overflow-hidden`
                   }
                 >
-                  {link.name}
+                  {({ isActive }) => (
+                    <>
+                      {/* Background animation */}
+                      <motion.div
+                        className="absolute inset-0 -z-10 rounded-lg"
+                        style={{
+                          background: isActive
+                            ? 'linear-gradient(135deg, rgba(144, 238, 144, 0.25), rgba(135, 206, 235, 0.15))'
+                            : 'linear-gradient(135deg, rgba(144, 238, 144, 0.08), rgba(135, 206, 235, 0.05))',
+                          border: isActive 
+                            ? '1.5px solid rgba(144, 238, 144, 0.35)'
+                            : '1px solid rgba(144, 238, 144, 0.15)',
+                          boxShadow: isActive
+                            ? '0 0 20px rgba(144, 238, 144, 0.2), inset 0 0 10px rgba(135, 206, 235, 0.1)'
+                            : '0 0 10px rgba(144, 238, 144, 0.08)',
+                        }}
+                        whileHover={{
+                          boxShadow: '0 0 25px rgba(144, 238, 144, 0.3), inset 0 0 12px rgba(135, 206, 235, 0.15)',
+                        }}
+                        layoutId={isActive ? 'activeNav' : undefined}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+
+                      {/* Animated dots indicator */}
+                      {isActive && (
+                        <motion.div
+                          className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-1"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <motion.div
+                            className="w-1 h-1 rounded-full bg-light-green-dark"
+                            animate={{ scale: [1, 1.3, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
+                          <motion.div
+                            className="w-1 h-1 rounded-full bg-sky-blue"
+                            animate={{ scale: [1, 1.3, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: 0.2 }}
+                          />
+                        </motion.div>
+                      )}
+
+                      <span className={`relative z-10 flex items-center gap-2 text-xs sm:text-sm ${
+                        isActive 
+                          ? 'text-light-green-dark' 
+                          : 'text-slate-700 group-hover:text-light-green-dark'
+                      }`}>
+                        <span className="text-lg">{link.icon}</span>
+                        <span className="hidden lg:inline">{link.name}</span>
+                      </span>
+                    </>
+                  )}
                 </NavLink>
               ))}
 
+              {/* Separator */}
+              <motion.div 
+                className="h-6 w-[1.5px] bg-gradient-to-b from-transparent via-sky-blue/40 to-transparent mx-2"
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
+
+              {/* Enhanced Join Beta Button */}
               <NavLink
                 to="/join-beta"
-                className={({ isActive }) =>
-                  `ml-2 px-5 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                    isActive
-                      ? 'bg-emerald-500 text-white dark:text-slate-900 shadow-lg shadow-emerald-500/20'
-                      : 'glass border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-primary-light hover:border-emerald-500 dark:hover:border-primary-light'
-                  }`
-                }
+                className="relative group ml-2"
               >
-                Join Beta
-              </NavLink>
+                {({ isActive }) => (
+                  <>
+                    {/* Button glow background */}
+                    <motion.div
+                      className="absolute -inset-1 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(144, 238, 144, 0.5), rgba(135, 206, 235, 0.3))',
+                      }}
+                    />
 
-              <div className="pl-4 ml-4 border-l border-slate-200 dark:border-slate-700 font-normal">
-                <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-primary-light"
-                  aria-label="Toggle Dark Mode"
-                >
-                  {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-              </div>
+                    {/* Button background */}
+                    <motion.div
+                      className="absolute inset-0 rounded-xl -z-10"
+                      style={{
+                        background: isActive
+                          ? 'linear-gradient(135deg, #90EE90 0%, #228B22 100%)'
+                          : 'linear-gradient(135deg, rgba(144, 238, 144, 0.25), rgba(135, 206, 235, 0.2))',
+                        border: isActive 
+                          ? '1.5px solid #90EE90' 
+                          : '1.5px solid rgba(144, 238, 144, 0.4)',
+                        boxShadow: isActive 
+                          ? '0 0 25px rgba(144, 238, 144, 0.6)' 
+                          : '0 0 15px rgba(144, 238, 144, 0.25)',
+                      }}
+                      whileHover={{
+                        boxShadow: isActive 
+                          ? '0 0 35px rgba(144, 238, 144, 0.8)' 
+                          : '0 0 30px rgba(144, 238, 144, 0.5)',
+                      }}
+                      transition={{ duration: 0.3 }}
+                    />
+
+                    <div className="relative px-6 py-2 rounded-xl flex items-center gap-2 font-bold text-sm whitespace-nowrap">
+                      <motion.div
+                        animate={{ rotate: [0, 20, -20, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Sparkles size={16} className={isActive ? 'text-white' : 'text-light-green-dark'} />
+                      </motion.div>
+                      <span className={isActive ? 'text-white' : 'text-slate-700 group-hover:text-light-green-dark'}>
+                        Join Beta
+                      </span>
+                    </div>
+                  </>
+                )}
+              </NavLink>
             </div>
           </div>
           
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button
+            <motion.button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-primary-light focus:outline-none"
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:text-light-green-dark focus:outline-none transition-colors"
+              style={{
+                background: isOpen 
+                  ? 'linear-gradient(135deg, rgba(144, 238, 144, 0.2), rgba(135, 206, 235, 0.15))'
+                  : 'transparent',
+                border: isOpen ? '1px solid rgba(144, 238, 144, 0.2)' : 'none',
+              }}
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -99,43 +284,112 @@ const Navbar = () => {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden glass border-t border-black/5 dark:border-white/10 overflow-hidden"
+          transition={{ duration: 0.4 }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(248, 254, 254, 0.9) 0%, rgba(135, 206, 235, 0.15) 100%)',
+            borderTop: '2px solid rgba(135, 206, 235, 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 12px 50px rgba(135, 206, 235, 0.15)',
+          }}
+          className="md:hidden overflow-hidden"
         >
-          <div className="px-4 py-4 space-y-2">
-            {navLinks.map((link) => (
+          <div className="px-4 py-6 space-y-3">
+            {navLinks.map((link, index) => (
+              <motion.div 
+                key={link.name} 
+                initial={{ opacity: 0, x: -20 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                transition={{ delay: index * 0.08 }}
+              >
+                <NavLink
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    `block px-4 py-3 rounded-lg text-base font-semibold transition-all relative group overflow-hidden`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <motion.div
+                        className="absolute inset-0 -z-10 rounded-lg"
+                        style={{
+                          background: isActive
+                            ? 'linear-gradient(135deg, rgba(144, 238, 144, 0.25), rgba(135, 206, 235, 0.15))'
+                            : 'linear-gradient(135deg, rgba(144, 238, 144, 0.1), rgba(135, 206, 235, 0.08))',
+                          border: isActive 
+                            ? '1.5px solid rgba(144, 238, 144, 0.3)' 
+                            : '1px solid rgba(144, 238, 144, 0.15)',
+                          boxShadow: isActive
+                            ? '0 0 15px rgba(144, 238, 144, 0.2)'
+                            : '0 0 8px rgba(144, 238, 144, 0.08)',
+                        }}
+                      />
+                      <span className={`relative z-10 flex items-center gap-2 ${
+                        isActive 
+                          ? 'text-light-green-dark' 
+                          : 'text-slate-700'
+                      }`}>
+                        <span className="text-lg">{link.icon}</span>
+                        {link.name}
+                      </span>
+                      {isActive && (
+                        <motion.div
+                          className="absolute right-2 top-1/2 -translate-y-1/2"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <div className="w-2 h-2 rounded-full bg-light-green-dark" />
+                        </motion.div>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              </motion.div>
+            ))}
+            
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
               <NavLink
-                key={link.name}
-                to={link.path}
+                to="/join-beta"
                 onClick={() => setIsOpen(false)}
                 className={({ isActive }) =>
-                  `block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                    isActive
-                      ? 'text-emerald-600 dark:text-primary-light bg-black/5 dark:bg-white/10'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-primary-light hover:bg-black/5 dark:hover:bg-white/5'
-                  }`
+                  `block px-4 py-3 rounded-lg text-base font-bold text-center transition-all duration-300 mt-4 relative overflow-hidden group`
                 }
               >
-                {link.name}
+                {({ isActive }) => (
+                  <>
+                    <motion.div
+                      className="absolute inset-0 -z-10 rounded-lg"
+                      style={{
+                        background: isActive
+                          ? 'linear-gradient(135deg, #90EE90, #228B22)'
+                          : 'linear-gradient(135deg, rgba(144, 238, 144, 0.2), rgba(135, 206, 235, 0.12))',
+                        border: isActive
+                          ? '1.5px solid rgba(144, 238, 144, 0.5)'
+                          : '1.5px solid rgba(144, 238, 144, 0.2)',
+                        boxShadow: isActive 
+                          ? '0 0 20px rgba(144, 238, 144, 0.4)'
+                          : '0 0 12px rgba(144, 238, 144, 0.12)',
+                      }}
+                      whileHover={{
+                        boxShadow: isActive
+                          ? '0 0 30px rgba(144, 238, 144, 0.6)'
+                          : '0 0 20px rgba(144, 238, 144, 0.25)',
+                      }}
+                    />
+                    <span className={`relative z-10 flex items-center justify-center gap-2 ${isActive ? 'text-white' : 'text-slate-700 group-hover:text-light-green-dark'}`}>
+                      <Sparkles size={16} />
+                      Join Beta
+                    </span>
+                  </>
+                )}
               </NavLink>
-            ))}
-            <NavLink
-              to="/join-beta"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `block px-4 py-3 rounded-xl text-base font-bold text-center transition-all duration-300 mt-4 ${
-                  isActive
-                    ? 'bg-emerald-500 text-white dark:text-slate-900 shadow-lg shadow-emerald-500/20'
-                    : 'glass border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-primary-light hover:border-emerald-500 dark:hover:border-primary-light'
-                }`
-              }
-            >
-              Join Beta
-            </NavLink>
+            </motion.div>
           </div>
         </motion.div>
       )}
-    </nav>
+    </motion.nav>
   );
 };
+
 
 export default Navbar;

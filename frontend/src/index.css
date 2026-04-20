@@ -6,48 +6,39 @@
 
 @layer base {
   body {
-    @apply antialiased text-slate-900 transition-colors duration-500 min-h-screen font-sans;
-    background: radial-gradient(at top right, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
-      radial-gradient(at bottom left, rgba(6, 182, 212, 0.05) 0%, transparent 40%),
-      #F8FAFC;
-    background-attachment: fixed;
-  }
-
-  .dark body {
-    @apply text-slate-100;
-    background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.1) 0%, transparent 45%),
-      radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.05) 0%, transparent 55%),
-      linear-gradient(135deg, #090e17 0%, #0f172a 50%, #111827 100%);
+    @apply antialiased text-slate-800 transition-colors duration-500 min-h-screen font-sans;
+    background: #F0FBF9; /* Nature Mist base */
     background-attachment: fixed;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white/60 backdrop-blur-xl border border-white/30 transition-all duration-300;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    @apply bg-white/70 backdrop-blur-xl border border-sky-blue/20 transition-all duration-300;
+    box-shadow: 0 8px 32px 0 rgba(135, 206, 235, 0.1);
+  }
+
+  .glass-dark {
+    @apply bg-slate-900/80 backdrop-blur-2xl border border-white/10 transition-all duration-500;
+    box-shadow: 0 15px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
   }
 
   .card-pro {
-    @apply bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 transition-all duration-300;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
+    @apply bg-[#FAFAFA] dark:bg-[#FAFAFA] border border-slate-200 transition-all duration-300;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   }
 
   .card-pro:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    @apply bg-white dark:bg-white border-slate-300;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   }
 
-  .dark .glass {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 transition-all duration-300;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  .glass-card {
+    @apply bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl;
   }
 
   .text-glow {
-    text-shadow: 0 0 10px rgba(0, 255, 135, 0.5);
-  }
-
-  .dark .text-glow {
-    text-shadow: 0 0 10px rgba(0, 255, 135, 0.8);
+    text-shadow: 0 0 10px rgba(144, 238, 144, 0.6);
   }
 
   @keyframes slide {
@@ -64,11 +55,12 @@
 
     0%,
     100% {
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+      box-shadow: 0 0 15px rgba(135, 206, 235, 0.5);
     }
 
     50% {
-      box-shadow: 0 0 30px rgba(245, 158, 11, 0.8);
+      box-shadow: 0 0 30px rgba(135, 206, 235, 0.8);
     }
   }
+
 }

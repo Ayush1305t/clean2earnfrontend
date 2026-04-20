@@ -52,16 +52,16 @@ const JoinBeta = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="glass p-12 rounded-3xl text-center max-w-md w-full"
         >
-          <div className="w-20 h-20 bg-primary-light/10 text-primary-light rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-light-green/20 text-light-green-dark rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={48} />
           </div>
-          <h2 className="text-3xl font-bold text-slate-950 dark:text-white mb-4">You're on the list!</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-8">
+          <h2 className="text-3xl font-bold text-slate-950 mb-4">You're on the list!</h2>
+          <p className="text-slate-600 mb-8">
             Thank you for joining our Beta program. We'll reach out to <strong>{formData.email}</strong> as soon as we're ready for you.
           </p>
           <button 
             onClick={() => setSubmitted(false)}
-            className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-primary-light dark:hover:bg-[#00e676] text-white dark:text-slate-900 font-bold py-4 rounded-2xl transition-all shadow-lg shadow-primary-light/20"
+            className="w-full bg-light-green-dark hover:bg-light-green text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-light-green/20"
           >
             Back to Home
           </button>
@@ -73,19 +73,19 @@ const JoinBeta = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex flex-col items-center relative overflow-hidden">
       {/* Background Decorators */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/10 rounded-full blur-[120px] z-[-1]" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] z-[-1]" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-light-green/10 rounded-full blur-[120px] z-[-1]" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-sky-blue/10 rounded-full blur-[120px] z-[-1]" />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-12 max-w-2xl px-4"
       >
-        <span className="inline-block px-4 py-1.5 rounded-full bg-pink-500/10 text-pink-500 dark:text-pink-400 font-bold text-sm mb-4 border border-pink-500/20">
+        <span className="inline-block px-4 py-1.5 rounded-full bg-light-green/20 text-light-green-dark font-bold text-sm mb-4 border border-light-green/40">
           Coming Soon! 👋
         </span>
-        <h1 className="text-4xl md:text-6xl font-extrabold text-slate-950 dark:text-white mb-6">Join our Private <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-indigo-500">Beta</span></h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-slate-950 mb-6">Join our Private <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-blue-dark">Beta</span></h1>
+        <p className="text-lg text-slate-600 leading-relaxed">
           Be among the first to experience the future of AI-powered environmental rewards. Help us shape the platform and earn exclusive early-adopter badges.
         </p>
       </motion.div>
@@ -98,12 +98,12 @@ const JoinBeta = () => {
       >
         <div className="glass p-8 md:p-10 rounded-[2.5rem] relative overflow-hidden">
           {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 dark:to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
           
           <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 group">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 group-focus-within:text-pink-500 transition-colors flex items-center gap-2">
+                <label className="text-sm font-semibold text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors flex items-center gap-2">
                   <User size={16} /> First Name
                 </label>
                 <input 
@@ -113,11 +113,11 @@ const JoinBeta = () => {
                   value={formData.first_name}
                   onChange={handleChange}
                   placeholder="Bhumika" 
-                  className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 text-slate-900 dark:text-white transition-all shadow-inner"
+                  className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/30 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
                 />
               </div>
               <div className="space-y-2 group">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 group-focus-within:text-pink-500 transition-colors flex items-center gap-2">
+                <label className="text-sm font-semibold text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors flex items-center gap-2">
                   <User size={16} /> Last Name
                 </label>
                 <input 
@@ -127,14 +127,14 @@ const JoinBeta = () => {
                   value={formData.last_name}
                   onChange={handleChange}
                   placeholder="Tyagi" 
-                  className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 text-slate-900 dark:text-white transition-all shadow-inner"
+                  className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/30 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 group">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 group-focus-within:text-pink-500 transition-colors flex items-center gap-2">
+                <label className="text-sm font-semibold text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors flex items-center gap-2">
                   <Mail size={16} /> Email Address
                 </label>
                 <input 
@@ -144,11 +144,11 @@ const JoinBeta = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="ayush.tiwari@example.com" 
-                  className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 text-slate-900 dark:text-white transition-all shadow-inner"
+                  className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/30 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
                 />
               </div>
               <div className="space-y-2 group">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 group-focus-within:text-pink-500 transition-colors flex items-center gap-2">
+                <label className="text-sm font-semibold text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors flex items-center gap-2">
                   <span className="text-lg">📞</span> Phone Number
                 </label>
                 <input 
@@ -158,13 +158,13 @@ const JoinBeta = () => {
                   value={formData.phoneNo}
                   onChange={handleChange}
                   placeholder="+91 9953195428" 
-                  className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 text-slate-900 dark:text-white transition-all shadow-inner"
+                  className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/30 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div className="space-y-2 group">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 group-focus-within:text-pink-500 transition-colors flex items-center gap-2">
+              <label className="text-sm font-semibold text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors flex items-center gap-2">
                 <MessageSquare size={16} /> Why do you want to join?
               </label>
               <textarea 
@@ -174,18 +174,18 @@ const JoinBeta = () => {
                 onChange={handleChange}
                 rows="4" 
                 placeholder="Share your interest in environmental sustainability..." 
-                className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 text-slate-900 dark:text-white transition-all resize-none shadow-inner"
+                className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/30 focus:border-light-green-dark text-slate-900 transition-all resize-none shadow-inner"
               ></textarea>
             </div>
 
             
             <button 
               type="submit"
-              className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-pink-500 dark:hover:bg-pink-400 text-white font-bold text-lg py-5 rounded-2xl shadow-xl hover:shadow-pink-500/20 transition-all flex items-center justify-center gap-3 group mt-4 overflow-hidden relative"
+              className="w-full bg-light-green-dark hover:bg-light-green text-white font-bold text-lg py-5 rounded-2xl shadow-xl hover:shadow-light-green/30 transition-all flex items-center justify-center gap-3 group mt-4 overflow-hidden relative"
             >
               <span className="relative z-10">Request Access</span>
               <Send size={20} className="relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-r from-light-green-dark to-sky-blue opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </form>
         </div>
