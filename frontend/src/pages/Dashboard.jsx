@@ -305,46 +305,46 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Daily Challenges Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <motion.div variants={item} className="lg:col-span-2 card-pro rounded-[2.5rem] p-10 min-h-[450px] flex flex-col relative overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <motion.div variants={item} className="card-pro rounded-[2rem] p-7 flex flex-col relative overflow-hidden">
             {/* Background Decorative Element */}
             <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-[100px] -mr-40 -mt-40" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 dark:bg-cyan-400/5 rounded-full blur-[80px] -ml-32 -mb-32" />
             
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4 relative z-10">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center shadow-inner">
-                  <Trophy size={36} className="text-amber-500 dark:text-amber-400" />
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center shadow-inner">
+                  <Trophy size={32} className="text-amber-500 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black text-black leading-tight">
+                  <h2 className="text-2xl font-black text-black leading-tight">
                     Daily Challenges
                   </h2>
-                  <p className="text-black font-bold">Complete daily tasks to boost your rewards</p>
+                  <p className="text-black font-bold text-sm">Complete daily tasks to boost your rewards</p>
                 </div>
               </div>
               
-              <div className="px-5 py-2.5 rounded-full bg-slate-100 text-black font-bold text-sm border border-slate-200/50 backdrop-blur-md">
+              <div className="px-4 py-2 rounded-full bg-slate-100 text-black font-bold text-sm border border-slate-200/50 backdrop-blur-md">
                 {dashData?.hasDailyLimitReached ? 'Completed Today' : `${missionsCompleted}/2 missions done`}
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center items-center py-6 px-4 relative z-10">
-              <div className="w-full max-w-2xl space-y-8">
+            <div className="flex-1 flex flex-col justify-between relative z-10">
+              <div className="w-full flex flex-col justify-between flex-1 gap-5">
                 {/* Progress Header */}
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className="text-5xl font-black text-black">{missionsCompleted}</span>
-                    <span className="text-2xl font-bold text-black">/2</span>
-                    <p className="text-black font-bold mt-1">Missions Completed</p>
+                    <span className="text-4xl font-black text-black">{missionsCompleted}</span>
+                    <span className="text-xl font-bold text-black">/2</span>
+                    <p className="text-black font-bold text-sm mt-1">Missions Completed</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-black font-black text-xl">+200 ECO BONUS</p>
-                    <p className="text-black text-sm font-bold uppercase tracking-widest">Active Reward</p>
+                    <p className="text-black font-black text-lg">+200 ECO BONUS</p>
+                    <p className="text-black text-xs font-bold uppercase tracking-widest">Active Reward</p>
                   </div>
                 </div>
 
-                <div className="relative h-6 w-full bg-slate-200 dark:bg-slate-200 rounded-full overflow-hidden border border-slate-300 dark:border-slate-300 p-1">
+                <div className="relative h-5 w-full bg-slate-200 dark:bg-slate-200 rounded-full overflow-hidden border border-slate-300 dark:border-slate-300 p-0.5">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${(missionsCompleted / 2) * 100}%` }}
@@ -356,46 +356,46 @@ const Dashboard = () => {
                 </div>
 
                 {/* Info Text */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="flex items-start gap-3 p-4 rounded-2xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-sm">
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-sm">
                       <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <Zap size={18} className="text-emerald-500" />
+                        <Zap size={16} className="text-emerald-500" />
                       </div>
-                      <p className="text-xs font-semibold text-black">
-                        Upload 2 cleanup sessions to unlock the daily bonus treasure.
+                      <p className="text-xs font-semibold text-black leading-tight">
+                        Upload 2 cleanup sessions to unlock the daily bonus.
                       </p>
                    </div>
-                   <div className="flex items-start gap-3 p-4 rounded-2xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-sm">
+                   <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-sm">
                       <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                        <Gift size={18} className="text-blue-500" />
+                        <Gift size={16} className="text-blue-500" />
                       </div>
-                      <p className="text-xs font-semibold text-black">
-                        Each completed mission also grants standard verification rewards.
+                      <p className="text-xs font-semibold text-black leading-tight">
+                        Each mission also grants standard verification rewards.
                       </p>
                    </div>
                 </div>
 
                 {/* Action Button */}
-                <div className="pt-4">
+                <div>
                   {missionsCompleted < 2 ? (
                     <button 
                       onClick={() => navigate('/upload')}
-                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 hover:from-emerald-600 hover:via-cyan-600 hover:to-indigo-700 text-slate-900 dark:text-white font-black text-xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan-500/25 group border border-white/10"
+                      className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 hover:from-emerald-600 hover:via-cyan-600 hover:to-indigo-700 text-slate-900 dark:text-white font-black text-base flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan-500/25 group border border-white/10"
                     >
                       Complete today mission
-                      <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                   ) : !isClaimed ? (
                     <button 
                       onClick={handleClaim}
-                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 dark:text-white font-black text-xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/30 animate-pulse"
+                      className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 dark:text-white font-black text-base flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/30 animate-pulse"
                     >
-                      <Gift size={24} />
+                      <Gift size={20} />
                       Claim 200 ECO Coins
                     </button>
                   ) : (
-                    <div className="w-full py-5 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500 text-emerald-500 font-black text-xl flex items-center justify-center gap-3">
-                      <CheckCircle size={24} />
+                    <div className="w-full py-4 rounded-xl bg-emerald-500/10 border-2 border-emerald-500 text-emerald-500 font-black text-base flex items-center justify-center gap-2">
+                      <CheckCircle size={20} />
                       Mission Fully Completed!
                     </div>
                   )}
@@ -460,10 +460,11 @@ const Dashboard = () => {
                 ))
               )}
             </div>
-
-            <LeaderboardCard leaderboard={dashData?.leaderboard || []} currentRank={dashData?.rank} />
           </motion.div>
         </div>
+
+        {/* Full-width Leaderboard below both sections */}
+        <LeaderboardCard leaderboard={(dashData?.leaderboard || []).slice(0, 5)} currentRank={dashData?.rank} />
 
       </motion.div>
     </div>
