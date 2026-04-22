@@ -339,8 +339,8 @@ const Dashboard = () => {
                     <p className="text-black font-bold text-sm mt-1">Missions Completed</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-black font-black text-lg">+200 ECO BONUS</p>
-                    <p className="text-black text-xs font-bold uppercase tracking-widest">Active Reward</p>
+                    <p className="text-black font-black text-lg">50 ECO MAX</p>
+                    <p className="text-black text-xs font-bold uppercase tracking-widest">Daily Limit</p>
                   </div>
                 </div>
 
@@ -362,7 +362,7 @@ const Dashboard = () => {
                         <Zap size={16} className="text-emerald-500" />
                       </div>
                       <p className="text-xs font-semibold text-black leading-tight">
-                        Upload 2 cleanup sessions to unlock the daily bonus.
+                        Maximum 2 cleanups are allowed each day.
                       </p>
                    </div>
                    <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-sm">
@@ -370,7 +370,7 @@ const Dashboard = () => {
                         <Gift size={16} className="text-blue-500" />
                       </div>
                       <p className="text-xs font-semibold text-black leading-tight">
-                        Each mission also grants standard verification rewards.
+                        Reward 25 ECO Coins on each verified cleanup.
                       </p>
                    </div>
                 </div>
@@ -385,19 +385,14 @@ const Dashboard = () => {
                       Complete today mission
                       <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </button>
-                  ) : !isClaimed ? (
-                    <button 
-                      onClick={handleClaim}
-                      className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-900 dark:text-white font-black text-base flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/30 animate-pulse"
-                    >
-                      <Gift size={20} />
-                      Claim 200 ECO Coins
-                    </button>
                   ) : (
-                    <div className="w-full py-4 rounded-xl bg-emerald-500/10 border-2 border-emerald-500 text-emerald-500 font-black text-base flex items-center justify-center gap-2">
-                      <CheckCircle size={20} />
-                      Mission Fully Completed!
-                    </div>
+                    <button 
+                      disabled
+                      className="w-full py-4 rounded-xl bg-slate-200 dark:bg-slate-200 text-slate-500 font-black text-base flex items-center justify-center gap-2 cursor-not-allowed border border-slate-300"
+                    >
+                      <CheckCircle size={20} className="text-slate-500" />
+                      Complete today mission
+                    </button>
                   )}
                 </div>
               </div>
