@@ -1,78 +1,89 @@
 const { buildPrompt } = require("../utils/promptBuilder");
 
-/**
- * Send before/after images to Grok's vision model for cleaning verification.
- * Returns the raw text response from the AI.
- */
-const requestCleaningVerification = async ({ beforeImage, afterImage, beforeMeta, afterMeta }) => {
-  const prompt = buildPrompt(beforeMeta, afterMeta);
+const createHttpError = (status, message) => {
+  const err = new Error(message);
+  err.statusCode = status;
+  return err;
+};
 
-  // Strip data URI prefix if present to get raw base64
-  const stripPrefix = (img) => img.replace(/^data:image\/[a-z]+;base64,/, "");
+const parseGroqResponse = async (response) => {
+  const rawResponseText = await response.text();
 
-  const response = await fetch("https://api.x.ai/v1/chat/completions", {
+  try {
+    return rawResponseText ? JSON.parse(rawResponseText) : {};
+  } catch {
+    return { raw: rawResponseText };
+  }
+};
+
+const getApiKey = () => process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
+
+const requestCleaningVerification = async ({
+  beforeImage,
+  afterImage,
+  beforeMeta = {},
+  afterMeta = {},
+}) => {
+  const apiKey = getApiKey();
+
+  if (!apiKey) {
+    throw createHttpError(500, "Server Groq key missing. Add GROQ_API_KEY in backend.");
+  }
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.GROK_API_KEY}`
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "grok-vision-beta",
+      model: process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [
         {
           role: "user",
           content: [
-            { type: "text", text: prompt },
+            {
+              type: "text",
+              text: buildPrompt(beforeMeta, afterMeta),
+            },
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${stripPrefix(beforeImage)}`,
+                url: `data:${beforeImage.mimeType};base64,${beforeImage.base64}`,
               },
             },
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${stripPrefix(afterImage)}`,
+                url: `data:${afterImage.mimeType};base64,${afterImage.base64}`,
               },
             },
           ],
         },
       ],
-      temperature: 0.2,
-      max_tokens: 300,
-    })
+    }),
   });
 
+  const data = await parseGroqResponse(response);
+
   if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    console.error("Grok API Error:", errData);
-    
-    // Parse xAI's specific error format or fallback
-    let errMsg = errData.error?.message || errData.error || "Failed to contact Grok AI";
-    
-    const isMockCondition = (typeof errMsg === 'string' && 
-      (errMsg.includes('Incorrect API key provided') || errMsg.includes('Model not found')));
+    const message =
+      data?.error?.message ||
+      data?.message ||
+      data?.detail ||
+      data?.raw ||
+      `Groq request failed with status ${response.status}.`;
 
-    if (isMockCondition) {
-      console.warn("API/Model Issue Detected. Using mock fallback for smooth UI testing.");
-      return JSON.stringify({
-        verdict: "CLEANED",
-        confidence: "HIGH",
-        details: "Mock verified successfully. Original AI call failed, so this is a simulated success for testing."
-      });
-    }
-
-    throw Object.assign(new Error(errMsg), { statusCode: response.status });
+    throw createHttpError(response.status, message);
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  const raw = String(data?.choices?.[0]?.message?.content || "").trim();
 
-  if (!content) {
-    throw Object.assign(new Error("No response from AI model"), { statusCode: 502 });
+  if (!raw) {
+    throw createHttpError(502, "Groq returned an empty response.");
   }
 
-  return content;
+  return raw;
 };
 
 module.exports = { requestCleaningVerification };
