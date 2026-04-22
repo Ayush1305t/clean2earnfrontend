@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const AnimatedBackground = () => {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
-
   // Artistic Tree Silhouette component
   const TreeSilhouette = ({ side }) => (
     <div 

@@ -1,325 +1,515 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Image as ImageIcon, CheckCircle, ShieldCheck, Coins, RefreshCw, Zap, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import UploadScanner from '../components/UploadScanner';
+
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertTriangle, ArrowLeft, Camera, CheckCircle, Coins,
+  Loader2, MapPin, RefreshCw, ShieldCheck, Leaf,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import useCamera from "../hooks/useCamera";
+import useAiVerification from "../hooks/useAiVerification";
+import { formatLocationText, formatPhotoMeta } from "../utils/photoMeta";
+import { getAuthToken } from "../utils/api";
+import api from "../lib/api";
+import realLeaf from "../assets/logo/real-leaf.png";
+
+const trackerSteps = ["Before", "After", "Verify", "Done"];
+const StepTracker = ({ step }) => (
+  <div className="w-full max-w-3xl mb-12">
+    <div className="relative mb-5 px-2">
+      <div
+        className="h-[6px] overflow-hidden rounded-full"
+        style={{
+          background: "rgba(15, 23, 42, 0.08)",
+        }}
+      >
+        <motion.div
+          className="relative h-full rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${((step + 1) / trackerSteps.length) * 100}%` }}
+          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            background: "linear-gradient(90deg, #0ea5e9 0%, #14b8a6 34%, #22c55e 68%, #84cc16 100%)",
+            boxShadow: "0 0 14px rgba(34,197,94,0.28)",
+          }}
+        >
+          <motion.div
+            className="absolute inset-y-0 w-20"
+            animate={{ x: ["-25%", "360%"] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
+            style={{
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+              filter: "blur(3px)",
+            }}
+          />
+        </motion.div>
+      </div>
+    </div>
+
+    <div className="relative z-10 flex justify-between gap-3">
+      {trackerSteps.map((label, index) => {
+        const active = step >= index;
+        const current = step === index;
+        return (
+          <div key={label} className="flex flex-1 flex-col items-center gap-2">
+            <motion.div
+              animate={{
+                scale: current ? 1.06 : 1,
+                y: current ? -1 : 0,
+                boxShadow: active ? "0 0 14px rgba(34,197,94,0.2)" : "none",
+              }}
+              transition={{ duration: 0.5 }}
+              className="flex h-10 w-10 items-center justify-center rounded-full transition-all duration-500"
+              style={{
+                background: active
+                  ? "linear-gradient(135deg, #14b8a6, #22c55e)"
+                  : "rgba(226, 232, 240, 0.85)",
+                border: active
+                  ? "1px solid rgba(16,185,129,0.32)"
+                  : "1px solid rgba(148, 163, 184, 0.24)",
+              }}
+            >
+              {active ? (
+                <CheckCircle size={18} className="text-white" />
+              ) : (
+                <span className="text-slate-700 text-sm font-bold">{index + 1}</span>
+              )}
+            </motion.div>
+            <span className={`text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${active ? 'text-black' : 'text-black/70'}`}>
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const PhotoCard = ({ label, photo }) => {
+  const meta = formatPhotoMeta(photo?.meta);
+  return (
+    <div className="relative rounded-2xl overflow-hidden aspect-video"
+      style={{
+        background: 'rgba(1,18,8,0.8)',
+        border: '1px solid rgba(16,185,129,0.15)',
+      }}
+    >
+      {photo ? (
+        <>
+          <img src={photo.dataUrl} alt={label} className="w-full h-full object-cover" />
+          <div className="absolute inset-x-0 bottom-0 p-4"
+            style={{ background: 'linear-gradient(to top, rgba(1,18,8,0.95), transparent)' }}
+          >
+            <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">{label}</div>
+            <div className="text-xs text-slate-300">{meta.date} | {meta.time}</div>
+            <div className="text-xs text-slate-400 truncate">{meta.location}</div>
+          </div>
+          <div className="absolute top-3 right-3">
+            <span className="eco-badge text-xs">Captured</span>
+          </div>
+        </>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-600">
+          <Camera size={32} className="opacity-40" />
+          <p className="text-sm">No photo captured yet</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Upload = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0); // 0: before, 1: after, 2: scanning, 3: done
-  const [beforeImg, setBeforeImg] = useState(null);
-  const [afterImg, setAfterImg] = useState(null);
-  const [missionsCompleted, setMissionsCompleted] = useState(0);
+  const [step, setStep] = useState(0);
+  const [beforePhoto, setBeforePhoto] = useState(null);
+  const [afterPhoto, setAfterPhoto] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
+  const [captureBusy, setCaptureBusy] = useState(false);
+  const [todayMissions, setTodayMissions] = useState(0);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [dailyStatusLoading, setDailyStatusLoading] = useState(true);
 
-  React.useEffect(() => {
-    const saved = localStorage.getItem('eco_mission_count');
-    if (saved) setMissionsCompleted(parseInt(saved));
+  const { videoRef, isStreaming, locationMeta, locationError, startCamera, stopCamera, capturePhoto } = useCamera();
+  const { status, result, error, verify, reset } = useAiVerification();
+
+  const locationText = useMemo(
+    () => formatLocationText(locationMeta, locationError),
+    [locationMeta, locationError],
+  );
+
+  useEffect(() => { return () => stopCamera(); }, [stopCamera]);
+
+  useEffect(() => {
+    const fetchDashboardSnapshot = async () => {
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setDailyStatusLoading(false);
+          return;
+        }
+        const res = await api.get("/api/dashboard", { headers: { Authorization: `Bearer ${token}` } });
+        setTodayMissions(res.data.todayMissions || 0);
+        setDailyLimitReached(Boolean(res.data.hasDailyLimitReached));
+      } catch (e) { console.error(e); }
+      finally { setDailyStatusLoading(false); }
+    };
+
+    fetchDashboardSnapshot();
   }, []);
 
-  const incrementMission = () => {
-    const current = parseInt(localStorage.getItem('eco_mission_count') || '0');
-    if (current < 2) {
-      const next = current + 1;
-      localStorage.setItem('eco_mission_count', next.toString());
-      setMissionsCompleted(next);
+  useEffect(() => {
+    if (step === 2 && beforePhoto && afterPhoto && status === "idle") {
+      verify(beforePhoto, afterPhoto).catch(() => {});
     }
+  }, [afterPhoto, beforePhoto, status, step, verify]);
+
+  useEffect(() => { if (status === "done") setStep(3); }, [status]);
+
+  useEffect(() => {
+    if (status === "done" && result) {
+      if (typeof result.todayMissions === "number") {
+        setTodayMissions(result.todayMissions);
+        setDailyLimitReached(Boolean(result.hasDailyLimitReached));
+      }
+    }
+  }, [result, status]);
+
+  const openCamera = async () => {
+    setCameraError(null);
+    if (dailyLimitReached) { setCameraError("Daily cleanup limit reached. Come back tomorrow."); return; }
+    try { await startCamera(); } catch (e) { setCameraError(e.message); }
   };
 
-  // Define steps for the visual tracker
-  const trackerSteps = ['Before', 'After', 'Verify', 'Done'];
-
-  const handleCameraClick = (type) => {
-    // Simulated mock loading delay to feel authentic
-    if (type === 'before') {
-      setTimeout(() => {
-        setBeforeImg('https://images.unsplash.com/photo-1618477461853-cf6ed80f04c3?q=80&w=1000&auto=format&fit=crop'); // Dirty / trash image mock
-        setStep(1);
-      }, 500);
-    } else if (type === 'after') {
-      setTimeout(() => {
-        setAfterImg('https://images.unsplash.com/photo-1584346860368-6f6a738ba5b4?q=80&w=1000&auto=format&fit=crop'); // Cleaned image mock
-        setStep(2); // Auto trigger AI Verify state immediately
-      }, 500);
-    }
+  const handleCapture = async () => {
+    setCaptureBusy(true); setCameraError(null);
+    try {
+      const photo = await capturePhoto();
+      if (!photo) throw new Error("Unable to capture photo.");
+      stopCamera();
+      if (step === 0) { setBeforePhoto(photo); setStep(1); }
+      else if (step === 1) { setAfterPhoto(photo); setStep(2); }
+    } catch (e) { setCameraError(e.message || "Unable to capture photo."); }
+    finally { setCaptureBusy(false); }
   };
 
   const handleReset = () => {
-    setStep(0);
-    setBeforeImg(null);
-    setAfterImg(null);
+    stopCamera(); reset(); setBeforePhoto(null); setAfterPhoto(null); setCameraError(null); setStep(0);
   };
 
+  const titles = ["Capture Before Photo", "Capture After Photo", "Verify Cleanup", "Complete"];
+  const subtitles = [
+    "Use the rear camera to photograph the dirty area before cleaning.",
+    "Capture the same area after cleaning so AI can compare both images.",
+    "Comparing both images, timestamps, and GPS data.",
+    "Verification complete.",
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex flex-col items-center min-h-[85vh]">
-      
-      {/* Page Title Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16 relative z-10">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-950 tracking-tight mb-4">
-          Upload & <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-blue-dark drop-shadow-sm">Verify</span>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex flex-col items-center">
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-10"
+      >
+        <div
+          className="mb-4 inline-flex items-center gap-3 rounded-full px-5 py-2.5"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(220,252,231,0.88), rgba(224,242,254,0.9))",
+            border: "1px solid rgba(16,185,129,0.16)",
+            boxShadow: "0 10px 24px rgba(15,23,42,0.08)",
+          }}
+        >
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-full"
+            style={{
+              background: "linear-gradient(135deg, rgba(16,185,129,0.14), rgba(14,165,233,0.16))",
+              border: "1px solid rgba(16,185,129,0.12)",
+            }}
+          >
+            <img src={realLeaf} alt="Clean2Earn logo" className="h-5 w-5 object-contain" />
+          </div>
+          <span
+            className="text-[12px] md:text-[13px] font-black uppercase tracking-[0.32em]"
+            style={{
+              color: "#0f766e",
+              fontFamily: '"Trebuchet MS", "Segoe UI", sans-serif',
+            }}
+          >
+            Clean2Earn Verification Suite
+          </span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
+          <span
+            style={{
+              color: '#0f172a',
+              textShadow: '0 2px 10px rgba(255,255,255,0.18)',
+            }}
+          >
+            Real Camera
+          </span>{' '}
+          <span
+            style={{
+              color: '#059669',
+              textShadow: '0 8px 20px rgba(5,150,105,0.18)',
+            }}
+          >
+            AI Verification
+          </span>
         </h1>
-        <p className="text-lg md:text-xl text-slate-600 font-medium max-w-2xl mx-auto">
-          Capture the environmental cleanup change. Let our AI analyze the data to earn your digital Eco-Coins.
+        <p className="text-black text-lg max-w-2xl mx-auto">
+          Capture real before/after photos with location metadata, then let our AI verify your cleanup.
         </p>
       </motion.div>
 
-      {/* Premium Progress Timeline Tracker */}
-      <div className="w-full max-w-4xl mb-20 relative z-10 px-6">
-        {/* Background track line (Pre-progress) */}
-        <div className="absolute top-[28px] md:top-[40px] left-[5%] right-[5%] h-3 bg-white dark:bg-white/90 -translate-y-1/2 rounded-full overflow-hidden border border-slate-200 dark:border-slate-300 backdrop-blur-sm shadow-inner" />
-        
-        {/* Animated active track line */}
-        <div className="absolute top-[28px] md:top-[40px] left-[5%] right-[5%] h-3 -translate-y-1/2 rounded-full overflow-hidden">
-          <div 
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-[0_0_20px_rgba(59,130,246,0.5)]" 
-            style={{ width: `${(step / 3) * 100}%` }}
-          >
-            {/* Animated Candy Stripes */}
-            <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.3)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.3)_50%,rgba(255,255,255,0.3)_75%,transparent_75%,transparent)] bg-[length:16px_16px] animate-[slide_1s_linear_infinite]" />
-          </div>
-        </div>
-        
-        <div className="flex justify-between relative z-10">
-          {trackerSteps.map((label, idx) => {
-            const isActive = step >= idx;
-            const isCurrent = step === idx;
-            return (
-              <div key={label} className="flex flex-col items-center gap-4 relative group">
-                <motion.div 
-                  initial={false}
-                  animate={{ scale: isCurrent ? 1.15 : 1 }}
-                  className={`w-14 h-14 md:w-20 md:h-20 rounded-[1rem] md:rounded-[1.5rem] flex items-center justify-center transition-all duration-700 backdrop-blur-2xl relative z-10
-                    ${isActive 
-                      ? 'bg-gradient-to-br from-blue-500 to-indigo-700 border-2 border-white shadow-[0_10px_30px_-5px_rgba(79,70,229,0.5)]' 
-                      : 'bg-white dark:bg-white border border-slate-200 dark:border-slate-200 shadow-xl group-hover:bg-slate-50'}`}
-                >
-                  {isActive ? (
-                    <motion.div
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
-                      <CheckCircle size={32} strokeWidth={3} className="text-white drop-shadow-lg" />
-                    </motion.div>
-                  ) : (
-                    <div className="text-slate-400 dark:text-slate-500 text-xl md:text-3xl font-black">{idx + 1}</div>
-                  )}
-                  {/* Subtle pulsing glow for current step */}
-                  {isCurrent && <div className="absolute -inset-1 rounded-[1.2rem] md:rounded-[1.7rem] border-2 border-blue-400 opacity-50 animate-ping z-[-1]" />}
-                </motion.div>
+      <StepTracker step={step} />
 
-                {/* Styled Pill Label */}
-                <div className={`px-5 py-2 rounded-full backdrop-blur-md border transition-all duration-500
-                   ${isActive 
-                     ? 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 shadow-[0_5px_15px_-3px_rgba(59,130,246,0.2)]' 
-                     : 'bg-white dark:bg-white border-slate-200 dark:border-slate-200 text-black dark:text-black shadow-sm'}`}>
-                  <span className="text-[10px] md:text-sm font-black tracking-widest uppercase">
-                    {label}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Interactive Glass Area */}
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }} 
+      {/* Main card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className="w-full max-w-5xl card-pro p-6 md:p-10 rounded-[2.5rem] relative overflow-hidden flex flex-col md:flex-row gap-6 md:gap-10 min-h-[500px] border-sky-blue/20"
+        transition={{ delay: 0.2 }}
+        className="w-full rounded-3xl p-6 md:p-8"
+        style={{
+          background: 'rgba(1,18,8,0.8)',
+          border: '1px solid rgba(16,185,129,0.15)',
+          backdropFilter: 'blur(24px)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        }}
       >
-         
-         {/* LEFT BOX: Before Photo */}
-         <div className={`flex-1 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${step === 0 ? 'scale-100 opacity-100 z-10' : 'scale-[0.98] opacity-60 grayscale-[30%]'}`}>
-            <h3 className="text-lg md:text-2xl font-bold text-slate-800 mb-4 flex justify-between items-center drop-shadow-sm">
-              <span className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-sky-blue/20 text-sky-blue flex items-center justify-center text-sm">1</span>
-                Before Photo
-              </span>
-              {beforeImg && <ShieldCheck className="text-light-green-dark" size={28} />}
-            </h3>
-            
-            <div className="flex-1 rounded-[2rem] border-2 border-dashed border-sky-blue/30 bg-sky-blue/5 flex flex-col items-center justify-center p-4 relative overflow-hidden group hover:border-sky-blue transition-colors duration-300 shadow-inner">
-              {beforeImg ? (
-                <motion.img 
-                  initial={{ opacity: 0, scale: 0.9 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  src={beforeImg} 
-                  alt="Before cleanup" 
-                  className="absolute inset-0 w-full h-full object-cover" 
-                />
-              ) : (
-                <motion.div 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="flex flex-col items-center text-slate-500 cursor-pointer p-8 rounded-3xl group-hover:bg-sky-blue/5 transition-colors" 
-                  onClick={() => handleCameraClick('before')}
-                >
-                  <div className="w-24 h-24 rounded-[2rem] bg-sky-blue/10 flex items-center justify-center mb-6 shadow-[inset_0_0_20px_rgba(135,206,235,0.1)] group-hover:bg-sky-blue/20 group-hover:shadow-[0_0_30px_rgba(135,206,235,0.2)] transition-all duration-300">
-                    <Camera size={44} className="text-sky-blue drop-shadow-md" />
-                  </div>
-                  <span className="font-extrabold text-xl text-slate-700">Open Camera</span>
-                  <span className="text-sm mt-2 opacity-80 font-medium">Capture original heavily-polluted state</span>
-                </motion.div>
-              )}
-            </div>
-         </div>
-
-         {/* RIGHT BOX: After Photo & Verify Scanner */}
-         <div className={`flex-1 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${step >= 1 ? 'scale-100 opacity-100 z-20' : 'scale-[0.96] opacity-40 pointer-events-none'}`}>
-            <h3 className="text-lg md:text-2xl font-bold text-slate-950 mb-4 flex justify-between items-center drop-shadow-sm">
-               <span className="flex items-center gap-3">
-                <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-colors ${step >= 1 ? 'bg-light-green/30 text-light-green-dark' : 'bg-slate-500/20 text-slate-500'}`}>2</span>
-                {step === 2 ? 'AI Analyzing' : 'After Photo'}
-              </span>
-              {step === 3 && <ShieldCheck className="text-light-green-dark" size={28} />}
-            </h3>
-            
-            <div className={`flex-1 rounded-[2rem] border-2 border-dashed bg-sky-blue/5 flex flex-col items-center justify-center p-4 relative overflow-hidden group transition-all duration-500 shadow-inner
-              ${step === 2 ? 'border-sky-blue shadow-[0_0_40px_rgba(135,206,235,0.2)]' : 'border-sky-blue/30 hover:border-light-green'}`}>
-              
-              {/* State 1: Request After Image */}
-              {step === 1 && !afterImg && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="flex flex-col items-center text-slate-500 cursor-pointer p-8 rounded-3xl group-hover:bg-light-green/5 transition-colors" 
-                  onClick={() => handleCameraClick('after')}
-                >
-                  <div className="w-24 h-24 rounded-[2rem] bg-light-green/20 flex items-center justify-center mb-6 shadow-[inset_0_0_20px_rgba(144,238,144,0.1)] group-hover:bg-light-green/30 group-hover:shadow-[0_0_30px_rgba(144,238,144,0.2)] transition-all duration-300">
-                    <ImageIcon size={44} className="text-light-green-dark drop-shadow-md" />
-                  </div>
-                  <span className="font-extrabold text-xl text-slate-700">Open Camera</span>
-                  <span className="text-sm mt-2 opacity-80 font-medium">Capture perfectly cleaned state</span>
-                </motion.div>
-              )}
-
-              {/* State 2: GSAP Scanning Engine Over Image */}
-              {step === 2 && afterImg && (
-                 <UploadScanner imageUrl={afterImg} onScanComplete={() => {
-                    setStep(3);
-                    incrementMission();
-                 }} />
-              )}
-
-              {/* State 3: Successfully Verified & Rewarded */}
-              {step === 3 && afterImg && (
-                 <motion.div 
-                   initial={{ opacity: 0 }} 
-                   animate={{ opacity: 1 }} 
-                   transition={{ duration: 0.8 }}
-                   className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-light-green/30 border-4 border-light-green rounded-[2rem] overflow-hidden backdrop-blur-sm"
-                 >
-                    <img src={afterImg} alt="After cleanup" className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-luminosity filter blur-sm" />
-                    
-                    {/* Glowing pulse rings behind checkmark */}
-                    <motion.div 
-                      animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }} 
-                      transition={{ duration: 2, repeat: Infinity }} 
-                      className="absolute w-32 h-32 rounded-full border-2 border-light-green/50" 
-                    />
-                    
-                    <motion.div 
-                      initial={{ scale: 0, rotate: -45 }} 
-                      animate={{ scale: 1, rotate: 0 }} 
-                      transition={{ type: 'spring', damping: 12, stiffness: 200 }} 
-                      className="relative z-10 flex flex-col items-center text-center p-6"
-                    >
-                       <CheckCircle size={80} className="text-light-green drop-shadow-[0_0_25px_rgba(144,238,144,1)] mb-6" />
-                       <h4 className="text-3xl font-extrabold text-slate-900 
-                                     drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] tracking-tight">
-                         Verified Perfectly!
-                       </h4>
-                       <p className="text-light-green-dark font-medium mt-2 shadow-black max-w-[200px] leading-snug">
-                         The environment thanks you for your action.
-                       </p>
-                       
-                       {/* Coins Badge */}
-                       <motion.div 
-                         initial={{ y: 20, opacity: 0 }}
-                         animate={{ y: 0, opacity: 1 }}
-                         transition={{ delay: 0.5, type: 'spring' }}
-                         className="mt-6 px-8 py-3 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.6)] hover:scale-105 transition-transform border border-yellow-200 cursor-default"
-                       >
-                          <Coins className="text-slate-900" size={24} />
-                          <span className="font-black text-slate-900 text-xl tracking-wider">+50 ECO</span>
-                       </motion.div>
-                    </motion.div>
-                 </motion.div>
-              )}
-            </div>
-         </div>
-
-      </motion.div>
-
-      {/* Action Buttons & Missions Status */}
-      <AnimatePresence>
-        {step === 3 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex flex-col items-center gap-6 mt-10 w-full max-w-xl"
+        {/* Card header */}
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-100">{titles[step]}</h2>
+            <p className="text-slate-400 mt-1.5 text-sm max-w-xl">{subtitles[step]}</p>
+            <p className="text-sm text-black mt-2 font-medium">Today's submissions: {todayMissions}/2</p>
+          </div>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-slate-200 transition-colors shrink-0"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
-            {/* 2x Boost Progress Bar if Mission Completed */}
-            {missionsCompleted === 2 && (
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-full card-pro p-6 rounded-3xl border-amber-500/30 bg-amber-500/5 relative overflow-hidden"
+            <ArrowLeft size={15} />
+            Dashboard
+          </button>
+        </div>
+
+        {step < 2 && (
+          <>
+            {dailyLimitReached && !dailyStatusLoading && (
+              <div className="mb-6 p-4 rounded-xl flex items-center gap-3 text-sm"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}
               >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 animate-[pulse_2s_infinite]" />
-                <div className="flex justify-between items-center mb-4">
-                   <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                        <Zap size={20} className="text-white fill-white" />
-                      </div>
-                      <span className="text-xl font-black text-amber-600 dark:text-amber-400 italic uppercase">2X BOOST ACTIVE</span>
-                   </div>
-                   <div className="text-right">
-                      <span className="text-sm font-bold text-slate-500 dark:text-slate-400 block uppercase">Mission Progress</span>
-                      <span className="text-lg font-black text-slate-800 dark:text-white">2 / 2</span>
-                   </div>
+                <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+                <span className="text-amber-300">Daily limit reached. Come back tomorrow for more submissions.</span>
+              </div>
+            )}
+
+            {/* Camera view */}
+            <div
+              className="rounded-[2rem] overflow-hidden aspect-video relative"
+              style={{
+                background: 'linear-gradient(135deg, rgba(2,12,10,0.98), rgba(5,28,23,0.94), rgba(8,45,37,0.9))',
+                border: '1px solid rgba(52,211,153,0.18)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 20px 45px rgba(0,0,0,0.35)',
+              }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(circle at top left, rgba(45,212,191,0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(34,197,94,0.12), transparent 34%)',
+                }}
+              />
+              {!isStreaming && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+                  <div
+                    className="flex h-16 w-16 items-center justify-center rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(52,211,153,0.16), rgba(34,211,238,0.14))',
+                      border: '1px solid rgba(103,232,249,0.18)',
+                    }}
+                  >
+                    <Camera size={34} className="text-emerald-300" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-base font-semibold text-emerald-50">Camera access panel</p>
+                    <p className="text-sm text-slate-400">Open the rear camera when you are ready to capture the cleanup scene.</p>
+                  </div>
                 </div>
-                
-                <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-300 dark:border-slate-700 p-0.5">
-                   <motion.div 
-                    initial={{ width: "50%" }}
-                    animate={{ width: "100%" }}
-                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
-                   />
-                </div>
-                <p className="text-center mt-4 text-slate-600 dark:text-slate-300 font-bold">
-                  You've completed the daily mission! Go back to claim your coins.
-                </p>
+              )}
+              <video ref={videoRef} autoPlay playsInline muted
+                className={`w-full h-full object-cover ${isStreaming ? "block" : "hidden"}`}
+              />
+              {/* Corner brackets */}
+              {isStreaming && (
+                <>
+                  <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-emerald-500 rounded-tl-lg opacity-70" />
+                  <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-emerald-500 rounded-tr-lg opacity-70" />
+                  <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-emerald-500 rounded-bl-lg opacity-70" />
+                  <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-emerald-500 rounded-br-lg opacity-70" />
+                </>
+              )}
+            </div>
+
+            {/* Location */}
+            <div className="mt-4 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
+              style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)' }}
+            >
+              <MapPin size={15} className="text-emerald-500 shrink-0" />
+              <span className="text-slate-400">{locationText}</span>
+            </div>
+
+            {cameraError && (
+              <div className="mt-4 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
+                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
+              >
+                <AlertTriangle size={15} className="text-red-400 shrink-0" />
+                <span className="text-red-300">{cameraError}</span>
+              </div>
+            )}
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              {!isStreaming ? (
+                <button
+                  onClick={openCamera}
+                  disabled={dailyLimitReached || dailyStatusLoading}
+                  className="inline-flex items-center gap-2.5 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-950 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                  style={{
+                    background: 'linear-gradient(135deg, #6ee7b7, #2dd4bf)',
+                    boxShadow: '0 18px 30px rgba(45,212,191,0.2)',
+                  }}
+                >
+                  <Camera size={16} />
+                  {dailyLimitReached ? "Daily Limit Reached" : "Open Camera"}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleCapture}
+                    disabled={captureBusy || dailyLimitReached}
+                    className="inline-flex items-center gap-2.5 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-950 transition-all disabled:opacity-60"
+                    style={{
+                      background: step === 0
+                        ? 'linear-gradient(135deg, #fde68a, #f59e0b)'
+                        : 'linear-gradient(135deg, #86efac, #22c55e)',
+                      boxShadow: step === 0
+                        ? '0 18px 32px rgba(245,158,11,0.2)'
+                        : '0 18px 32px rgba(34,197,94,0.22)',
+                    }}
+                  >
+                    {captureBusy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                    {captureBusy ? "Capturing..." : step === 0 ? "Capture Before Photo" : "Capture After Photo"}
+                  </button>
+                  <button
+                    onClick={stopCamera}
+                    className="inline-flex items-center gap-2.5 rounded-2xl px-5 py-3.5 text-sm font-bold text-rose-100 transition-all"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(127,29,29,0.92), rgba(190,24,93,0.82))',
+                      border: '1px solid rgba(251,113,133,0.34)',
+                      boxShadow: '0 16px 30px rgba(159,18,57,0.18)',
+                    }}
+                  >
+                    Close Camera
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+
+        {step >= 2 && (
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <PhotoCard label="Before" photo={beforePhoto} />
+              <PhotoCard label="After" photo={afterPhoto} />
+            </div>
+
+            {/* Loading */}
+            {status === "loading" && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-2xl p-8 flex flex-col items-center text-center gap-4"
+                style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)' }}
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="w-12 h-12 rounded-full"
+                  style={{ border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0ea5e9' }}
+                />
+                <h3 className="text-xl font-bold text-slate-100">Analyzing Cleanup</h3>
+                <p className="text-slate-400 text-sm max-w-sm">Comparing images, timestamps, and GPS location data...</p>
               </motion.div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
-               <button 
-                onClick={handleReset}
-                className="flex-1 py-4 px-6 rounded-2xl card-pro font-bold text-sky-blue-dark flex items-center justify-center gap-2 hover:-translate-y-1 transition-all border-sky-blue/30"
+            {/* Error */}
+            {status === "error" && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-2xl p-6"
+                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
               >
-                <RefreshCw size={18} />
-                Scan Another
-              </button>
-              
-              <button 
-                onClick={() => navigate('/dashboard')}
-                className={`flex-1 py-4 px-6 rounded-2xl font-black text-white flex items-center justify-center gap-2 hover:-translate-y-1 transition-all shadow-lg 
-                  ${missionsCompleted === 2 ? 'bg-gradient-to-r from-amber-500 to-orange-600 shadow-orange-500/20' : 'bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-cyan-500/20'}`}
-              >
-                <ArrowLeft size={18} />
-                {missionsCompleted === 2 ? 'Claim Bonus Coins' : 'Back to Dashboard'}
+                <div className="flex items-center gap-2 font-bold mb-2 text-red-400">
+                  <AlertTriangle size={18} /> Verification failed
+                </div>
+                <p className="text-red-300 text-sm">{error}</p>
+                <button onClick={handleReset} className="mt-4 btn-eco-ghost text-sm border-red-500/30 text-red-400 hover:bg-red-500/10">
+                  Start Again
+                </button>
+              </motion.div>
+            )}
+
+            {/* Done */}
+            {status === "done" && result && (
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="rounded-2xl p-8 text-center"
+                  style={{
+                    background: result.verdict === "CLEANED"
+                      ? 'rgba(16,185,129,0.08)'
+                      : 'rgba(245,158,11,0.06)',
+                    border: result.verdict === "CLEANED"
+                      ? '1px solid rgba(16,185,129,0.25)'
+                      : '1px solid rgba(245,158,11,0.2)',
+                  }}
+                >
+                  <ShieldCheck size={48} className="mx-auto mb-4 text-emerald-400" style={{ filter: 'drop-shadow(0 0 20px rgba(16,185,129,0.5))' }} />
+                  <h3 className="text-2xl font-bold text-slate-100 mb-3">
+                    {result.verdict === "CLEANED"
+                      ? "Cleanup Verified!"
+                      : result.verdict === "FRAUD_DETECTED"
+                        ? "Verification Flagged"
+                        : "Needs More Cleaning"}
+                  </h3>
+                  <p className="text-slate-400 max-w-xl mx-auto text-sm mb-5">{result.details}</p>
+                  {result.awardedCoins > 0 && (
+                    <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold"
+                      style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', color: '#fbbf24' }}
+                    >
+                      <Coins size={16} />
+                      +{result.awardedCoins} Rewards Earned
+                    </div>
+                  )}
+                  <div className="mt-4 text-xs text-slate-500">Confidence: {result.confidence}</div>
+                </motion.div>
+              </AnimatePresence>
+            )}
+
+            <div className="flex justify-center pt-2">
+              <button onClick={handleReset} className="btn-eco-ghost">
+                <RefreshCw size={15} />
+                Reset Flow
               </button>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-
+      </motion.div>
     </div>
   );
 };

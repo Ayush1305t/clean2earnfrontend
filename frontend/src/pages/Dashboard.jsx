@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Coins, Image as ImageIcon, History, Trophy, TrendingUp, CheckCircle, Zap, Gift, ArrowRight } from 'lucide-react';
+import { Coins, Image as ImageIcon, Trophy, TrendingUp, CheckCircle, Zap, Gift, ArrowRight, Loader2, Crown, Medal, Award, Trees, Leaf } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../context/AuthContext';
+import { getApiUrl, getNetworkErrorMessage, parseApiResponse } from '../utils/api';
 
 const FireworkParticles = () => {
   return (
@@ -35,42 +37,177 @@ const FireworkParticles = () => {
   );
 };
 
+const LeaderboardCard = ({ leaderboard = [], currentRank }) => {
+  if (!leaderboard.length) return null;
+
+  return (
+    <div className="mt-8 pt-6 border-t border-slate-200 relative z-10">
+      <div className="rounded-[2rem] p-6 md:p-7 relative overflow-hidden bg-white/90 border border-sky-blue/20 shadow-xl">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-400/10 rounded-full blur-[90px] -ml-28 -mb-28 pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
+              <Trees size={30} />
+            </div>
+            <div>
+              <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900">Eco Champions</h3>
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-600">Live Leaderboard</p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-emerald-200 shadow-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            Your rank: #{currentRank || 'N/A'}
+          </div>
+        </div>
+
+        <div className="relative z-10 space-y-4">
+          {leaderboard.map((leader) => {
+            const isTop3 = leader.rank <= 3;
+            const isCurrentUser = leader.rank === currentRank;
+            const rankStyles = {
+              1: 'bg-gradient-to-r from-amber-100 to-yellow-50 border-amber-300 shadow-[0_0_28px_rgba(251,191,36,0.22)]',
+              2: 'bg-gradient-to-r from-slate-100 to-slate-50 border-slate-300 shadow-[0_0_18px_rgba(148,163,184,0.18)]',
+              3: 'bg-gradient-to-r from-orange-100 to-orange-50 border-orange-300 shadow-[0_0_18px_rgba(251,146,60,0.16)]',
+              default: isCurrentUser
+                ? 'bg-gradient-to-r from-emerald-50 to-cyan-50 border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.14)]'
+                : 'bg-white border-slate-200 shadow-sm hover:bg-emerald-50/60 hover:border-emerald-200',
+            };
+
+            const badgeStyles = {
+              1: 'bg-gradient-to-br from-yellow-400 to-amber-600 text-white shadow-amber-500/40',
+              2: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-slate-500/35',
+              3: 'bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-orange-500/35',
+              default: isCurrentUser
+                ? 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-emerald-500/35'
+                : 'bg-slate-200 text-slate-600 border border-slate-300',
+            };
+
+            const RankIcon = leader.rank === 1 ? Crown : leader.rank === 2 || leader.rank === 3 ? Medal : Award;
+
+            return (
+              <div
+                key={leader.rank}
+                className={`flex items-center gap-4 md:gap-7 p-5 rounded-3xl border transition-all duration-300 ${rankStyles[leader.rank] || rankStyles.default}`}
+              >
+                <div className="relative">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg shadow-lg ${badgeStyles[leader.rank] || badgeStyles.default}`}>
+                    {isTop3 ? <RankIcon size={26} className="drop-shadow-md" /> : `#${leader.rank}`}
+                  </div>
+                  {leader.rank === 1 && <div className="absolute inset-0 rounded-2xl bg-yellow-400/50 blur-xl" />}
+                </div>
+
+                <div className="w-16 h-16 rounded-full bg-emerald-100 overflow-hidden border-4 border-white shadow-md">
+                  <img
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(leader.name)}&backgroundColor=e6f6ee`}
+                    alt={leader.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <p className={`font-black text-xl truncate ${leader.rank === 1 ? 'text-amber-700' : 'text-slate-800'}`}>
+                      {leader.name}
+                    </p>
+                    {isCurrentUser && (
+                      <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-widest border border-emerald-200">
+                        You
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Leaf size={14} className="text-emerald-500" />
+                    <p className="text-sm text-emerald-700 font-bold">{leader.cleanups || 0} verified actions</p>
+                  </div>
+                </div>
+
+                <div className="text-right pl-2">
+                  <p className={`text-2xl md:text-3xl font-black ${isTop3 ? 'text-slate-900' : 'text-slate-700'}`}>
+                    {leader.coins}
+                  </p>
+                  <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.25em] text-emerald-600">
+                    Eco Coins
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [missionsCompleted, setMissionsCompleted] = React.useState(0);
-  const [isClaimed, setIsClaimed] = React.useState(false);
-  const [showClaimAnimation, setShowClaimAnimation] = React.useState(false);
+  const { token } = useAuth();
+  const [dashData, setDashData] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [fetchError, setFetchError] = useState('');
+  const [isClaimed, setIsClaimed] = useState(false);
+  const [showClaimAnimation, setShowClaimAnimation] = useState(false);
 
-  React.useEffect(() => {
-    const saved = localStorage.getItem('eco_mission_count');
-    const claimed = localStorage.getItem('eco_mission_claimed') === 'true';
-    if (saved) setMissionsCompleted(parseInt(saved));
-    setIsClaimed(claimed);
-  }, []);
+  // Fetch dashboard data from backend
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/dashboard'), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await parseApiResponse(res);
 
-  const handleClaim = () => {
-    setShowClaimAnimation(true);
-    confetti({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#FFD700', '#FFA500', '#FF4500']
-    });
-    
-    // Simulate claim process
-    setTimeout(() => {
-      setIsClaimed(true);
-      localStorage.setItem('eco_mission_claimed', 'true');
-      setShowClaimAnimation(false);
+        if (!res.ok) {
+          setFetchError(data.message || 'Failed to load dashboard');
+          setLoadingData(false);
+          return;
+        }
+
+        setDashData(data);
+        setIsClaimed(!!data.hasClaimedDaily);
+        setLoadingData(false);
+      } catch (err) {
+        setFetchError(getNetworkErrorMessage(err, 'Network error loading dashboard'));
+        setLoadingData(false);
+      }
+    };
+
+    if (token) fetchDashboard();
+  }, [token]);
+
+  const handleClaim = async () => {
+    try {
+      const res = await fetch(getApiUrl('/api/dashboard/claim'), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await parseApiResponse(res);
       
-      // Bonus animation: decrease progress bar
+      if (!res.ok) {
+        alert(data.message || "Failed to claim");
+        return;
+      }
+
+      // Start animation
+      setShowClaimAnimation(true);
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FFA500', '#FF4500']
+      });
+      
+      // Update actual dashboard coins in real-time
+      setDashData(prev => ({ ...prev, coins: data.coins }));
+      
       setTimeout(() => {
-        setMissionsCompleted(0);
-        localStorage.setItem('eco_mission_count', '0');
-        localStorage.setItem('eco_mission_claimed', 'false');
-        setIsClaimed(false);
-      }, 2000);
-    }, 3000);
+        setIsClaimed(true);
+        setShowClaimAnimation(false);
+      }, 3000);
+    } catch (err) {
+      alert(getNetworkErrorMessage(err, "Network error trying to claim."));
+    }
   };
 
   const container = {
@@ -85,6 +222,36 @@ const Dashboard = () => {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
   };
+
+  if (loadingData) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 size={48} className="text-emerald-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-semibold text-lg">Loading your dashboard...</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center justify-center min-h-[60vh]">
+        <p className="text-red-500 font-semibold text-lg mb-4">{fetchError}</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-2xl bg-emerald-500 text-white font-bold">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const missionsCompleted = dashData?.todayMissions || 0;
+  const stats = [
+    { label: "Total Eco-Coins", value: (dashData?.coins || 0).toLocaleString(), icon: Coins, color: "text-amber-600", bg: "bg-amber-50", darkBg: "dark:bg-amber-950/20", darkColor: "dark:text-amber-400" },
+    { label: "Verified Cleanups", value: String(dashData?.cleanups || 0), icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50", darkBg: "dark:bg-emerald-950/20", darkColor: "dark:text-emerald-400" },
+    { label: "Impact Score", value: String(dashData?.impact || 0), icon: TrendingUp, color: "text-cyan-600", bg: "bg-cyan-50", darkBg: "dark:bg-cyan-950/20", darkColor: "dark:text-cyan-400" },
+    { label: "Global Rank", value: dashData?.rank ? `#${dashData.rank}` : 'N/A', icon: Trophy, color: "text-purple-600", bg: "bg-purple-50", darkBg: "dark:bg-purple-950/20", darkColor: "dark:text-purple-400" },
+  ];
+
+  const activities = dashData?.activities || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
@@ -113,12 +280,7 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            { label: "Total Eco-Coins", value: "1,250", icon: Coins, color: "text-amber-600", bg: "bg-amber-50", darkBg: "dark:bg-amber-950/20", darkColor: "dark:text-amber-400" },
-            { label: "Verified Cleanups", value: "24", icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50", darkBg: "dark:bg-emerald-950/20", darkColor: "dark:text-emerald-400" },
-            { label: "Impact Score", value: "850", icon: TrendingUp, color: "text-cyan-600", bg: "bg-cyan-50", darkBg: "dark:bg-cyan-950/20", darkColor: "dark:text-cyan-400" },
-            { label: "Global Rank", value: "#142", icon: Trophy, color: "text-purple-600", bg: "bg-purple-50", darkBg: "dark:bg-purple-950/20", darkColor: "dark:text-purple-400" },
-          ].map((stat, idx) => (
+          {stats.map((stat, idx) => (
             <div key={idx} className="card-pro p-8 rounded-[2rem] relative overflow-hidden group hover:-translate-y-2 transition-all duration-500">
               {/* Background Glow */}
               <div className={`absolute -right-10 -top-10 w-32 h-32 ${stat.bg} ${stat.darkBg} rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
@@ -163,7 +325,7 @@ const Dashboard = () => {
               </div>
               
               <div className="px-5 py-2.5 rounded-full bg-slate-100 text-black font-bold text-sm border border-slate-200/50 backdrop-blur-md">
-                Resets in 12h 45m
+                {dashData?.hasDailyLimitReached ? 'Completed Today' : `${missionsCompleted}/2 missions done`}
               </div>
             </div>
 
@@ -271,36 +433,35 @@ const Dashboard = () => {
             <h2 className="text-2xl font-black text-black mb-8 relative z-10">Recent Activity</h2>
             
             <div className="space-y-4 flex-1 relative z-10">
-              {[
-                { place: "Central Park", time: "2 hours ago", coins: 50, img: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=200&auto=format&fit=crop" },
-                { place: "Santa Monica Beach", time: "5 hours ago", coins: 75, img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=200&auto=format&fit=crop" },
-                { place: "Golden Gate Bridge", time: "Yesterday", coins: 120, img: "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?q=80&w=200&auto=format&fit=crop" },
-                { place: "Yosemite Valley", time: "2 days ago", coins: 200, img: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?q=80&w=200&auto=format&fit=crop" },
-              ].map((activity, idx) => (
-                <div key={idx} className="flex items-center gap-5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group border border-transparent hover:border-slate-100 dark:hover:border-white/10">
-                  <div className="w-14 h-14 rounded-xl relative overflow-hidden shadow-md flex-shrink-0">
-                     <img 
-                       src={activity.img} 
-                       alt={activity.place} 
-                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                     />
-                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+              {activities.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                    <ImageIcon size={32} className="text-slate-400" />
                   </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-black text-base line-clamp-1">{activity.place}</p>
-                    <p className="text-xs font-bold text-black mt-0.5 uppercase tracking-wide">
-                      {activity.time} • <span className="text-black">+{activity.coins} coins</span>
-                    </p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 border border-emerald-100 dark:border-emerald-500/20">
-                    <CheckCircle size={16} />
-                  </div>
+                  <p className="text-slate-400 font-semibold">No activities yet</p>
+                  <p className="text-slate-400 text-sm mt-1">Upload your first cleanup to get started!</p>
                 </div>
-              ))}
+              ) : (
+                activities.map((activity, idx) => (
+                  <div key={idx} className="flex items-center gap-5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group border border-transparent hover:border-slate-100 dark:hover:border-white/10">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-100 to-cyan-100 flex items-center justify-center shadow-md flex-shrink-0">
+                      <CheckCircle size={24} className="text-emerald-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-black text-base line-clamp-1">{activity.location || 'Cleanup'}</p>
+                      <p className="text-xs font-bold text-black mt-0.5 uppercase tracking-wide">
+                        {new Date(activity.createdAt).toLocaleDateString()} | <span className="text-black">+{activity.coins} coins</span>
+                      </p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 border border-emerald-100 dark:border-emerald-500/20">
+                      <CheckCircle size={16} />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <button className="w-full mt-8 py-4 rounded-2xl border border-slate-200 text-sm font-black text-black hover:bg-slate-50 transition-all relative z-10">
-              View Detailed Log
-            </button>
+
+            <LeaderboardCard leaderboard={dashData?.leaderboard || []} currentRank={dashData?.rank} />
           </motion.div>
         </div>
 

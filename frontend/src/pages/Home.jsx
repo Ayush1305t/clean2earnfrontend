@@ -36,9 +36,6 @@ const Home = () => {
               Start Earning
               <ArrowRight size={20} />
             </Link>
-            <Link to="/impact" className="px-8 py-4 rounded-xl glass hover:bg-sky-blue/20 font-bold text-lg transition-all flex items-center gap-2 hover:-translate-y-1 text-slate-800">
-              View Impact
-            </Link>
             <Link to="/join-beta" className="px-8 py-4 rounded-xl border-2 border-sky-blue glass hover:border-light-green font-bold text-lg transition-all flex items-center gap-2 hover:-translate-y-1 text-slate-800 group">
               Join Beta
               <Sparkles size={20} className="text-light-green-dark group-hover:animate-pulse" />

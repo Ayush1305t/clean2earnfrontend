@@ -1,8 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, MapPin, Mail, Phone } from 'lucide-react';
+import { Send, MapPin, Mail, Phone, CheckCircle } from 'lucide-react';
+import { getApiUrl, getNetworkErrorMessage, parseApiResponse } from '../utils/api';
 
 const Contact = () => {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(getApiUrl('/api/contact'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      const data = await parseApiResponse(res);
+
+      if (!res.ok) {
+        setError(data.message || 'Failed to send message');
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+      setForm({ name: '', email: '', message: '' });
+      setLoading(false);
+    } catch (err) {
+      setError(getNetworkErrorMessage(err, 'Server error. Please try again.'));
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex flex-col lg:flex-row gap-16 relative overflow-hidden">
       {/* Background blur decorators */}
@@ -63,37 +103,92 @@ const Contact = () => {
           {/* Subtle gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
           
-          <h2 className="text-3xl font-bold text-slate-950 mb-8 relative z-10">Send us a Message</h2>
-          <form className="space-y-6 relative z-10" onSubmit={(e) => e.preventDefault()}>
-            <div className="space-y-2 group">
-              <label className="text-sm font-medium text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors">Full Name</label>
-              <input 
-                type="text" 
-                placeholder="John Doe" 
-                className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/50 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
-              />
-            </div>
-            <div className="space-y-2 group">
-              <label className="text-sm font-medium text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors">Email Address</label>
-              <input 
-                type="email" 
-                placeholder="john@example.com" 
-                className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/50 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
-              />
-            </div>
-            <div className="space-y-2 group">
-              <label className="text-sm font-medium text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors">Message</label>
-              <textarea 
-                rows="5" 
-                placeholder="How can we help you?" 
-                className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/50 focus:border-light-green-dark text-slate-900 transition-all resize-none shadow-inner"
-              ></textarea>
-            </div>
-            <button className="w-full bg-light-green-dark hover:bg-light-green text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:shadow-light-green/30 transition-all flex items-center justify-center gap-3 group mt-4">
-              Send Message
-              <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-            </button>
-          </form>
+          {success ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-12 relative z-10"
+            >
+              <div className="w-20 h-20 bg-light-green/20 text-light-green-dark rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle size={48} />
+              </div>
+              <h2 className="text-3xl font-bold text-slate-950 mb-4">Message Sent!</h2>
+              <p className="text-slate-600 mb-8">Thank you for reaching out. We'll get back to you soon.</p>
+              <button 
+                onClick={() => setSuccess(false)}
+                className="px-8 py-3 bg-light-green-dark text-white font-bold rounded-2xl hover:bg-light-green transition-colors"
+              >
+                Send Another
+              </button>
+            </motion.div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold text-slate-950 mb-8 relative z-10">Send us a Message</h2>
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm font-semibold text-center relative z-10"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
+                <div className="space-y-2 group">
+                  <label className="text-sm font-medium text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors">Full Name</label>
+                  <input 
+                    required
+                    type="text" 
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="John Doe" 
+                    className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/50 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
+                  />
+                </div>
+                <div className="space-y-2 group">
+                  <label className="text-sm font-medium text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors">Email Address</label>
+                  <input 
+                    required
+                    type="email" 
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="john@example.com" 
+                    className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/50 focus:border-light-green-dark text-slate-900 transition-all shadow-inner"
+                  />
+                </div>
+                <div className="space-y-2 group">
+                  <label className="text-sm font-medium text-slate-700 ml-1 group-focus-within:text-light-green-dark transition-colors">Message</label>
+                  <textarea 
+                    required
+                    rows="5" 
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
+                    placeholder="How can we help you?" 
+                    className="w-full bg-white/70 border border-sky-blue/20 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-light-green/50 focus:border-light-green-dark text-slate-900 transition-all resize-none shadow-inner"
+                  ></textarea>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-light-green-dark hover:bg-light-green text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:shadow-light-green/30 transition-all flex items-center justify-center gap-3 group mt-4 disabled:opacity-60"
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      Send Message
+                      <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </motion.div>
     </div>

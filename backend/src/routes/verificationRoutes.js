@@ -1,8 +1,9 @@
 const express = require("express");
-const { verifyCleaning } = require("../controllers/verificationController");
+const { verifyCleanup } = require("../controllers/verificationController");
+const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.post("/verify-cleaning", verifyCleaning);
+router.post("/", protect, verifyCleanup);
 
 module.exports = router;
