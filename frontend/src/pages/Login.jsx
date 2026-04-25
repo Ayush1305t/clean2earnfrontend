@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import { getApiUrl, getNetworkErrorMessage, parseApiResponse } from '../utils/api';
@@ -32,18 +33,24 @@ const Login = () => {
       const data = await parseApiResponse(res);
 
       if (!res.ok) {
-        setError(data.message || 'Login failed');
+        const errorMsg = data.message || 'Login unsuccessful, check your credentials and try to login again';
+        setError(errorMsg);
+        toast.error(errorMsg);
         setLoading(false);
         return;
       }
 
+      toast.success('Logged in successfully!');
       login(data.user, data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(getNetworkErrorMessage(err, 'Server error. Please try again.'));
+      const errorMsg = getNetworkErrorMessage(err, 'Login unsuccessful, check your credentials and try to login again');
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex items-center justify-center min-h-[80vh]">

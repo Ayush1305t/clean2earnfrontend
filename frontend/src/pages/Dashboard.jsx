@@ -5,11 +5,13 @@ import { Coins, Image as ImageIcon, Trophy, TrendingUp, CheckCircle, Zap, Gift, 
 import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl, getNetworkErrorMessage, parseApiResponse } from '../utils/api';
+import { getAvatarUrl } from '../utils/avatar';
 
-const FireworkParticles = () => {
+const FireworkParticles = ({ isMobile }) => {
+  const count = isMobile ? 20 : 60;
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
-      {[...Array(60)].map((_, i) => {
+      {[...Array(count)].map((_, i) => {
         const angle = Math.random() * Math.PI * 2;
         const velocity = 100 + Math.random() * 400;
         const xOffset = Math.cos(angle) * velocity;
@@ -28,7 +30,8 @@ const FireworkParticles = () => {
             transition={{ duration: 1 + Math.random() * 1.5, ease: "easeOut", delay: 0.2 }}
             className={`absolute w-3 h-3 rounded-${Math.random() > 0.5 ? 'full' : 'sm'}`}
             style={{
-              backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)]
+              backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)],
+              transform: 'translateZ(0)'
             }}
           />
         );
@@ -37,14 +40,14 @@ const FireworkParticles = () => {
   );
 };
 
-const LeaderboardCard = ({ leaderboard = [], currentRank }) => {
+const LeaderboardCard = ({ leaderboard = [], currentRank, isMobile }) => {
   if (!leaderboard.length) return null;
 
   return (
     <div className="mt-8 pt-6 border-t border-slate-200 relative z-10">
       <div className="rounded-[2rem] p-6 md:p-7 relative overflow-hidden bg-white/90 border border-sky-blue/20 shadow-xl">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-400/10 rounded-full blur-[90px] -ml-28 -mb-28 pointer-events-none" />
+        <div className={`absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full ${isMobile ? 'blur-[40px]' : 'blur-[100px]'} -mr-32 -mt-32 pointer-events-none`} />
+        <div className={`absolute bottom-0 left-0 w-64 h-64 bg-cyan-400/10 rounded-full ${isMobile ? 'blur-[40px]' : 'blur-[90px]'} -ml-28 -mb-28 pointer-events-none`} />
 
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-6">
           <div className="flex items-center gap-4">
@@ -95,12 +98,12 @@ const LeaderboardCard = ({ leaderboard = [], currentRank }) => {
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg shadow-lg ${badgeStyles[leader.rank] || badgeStyles.default}`}>
                     {isTop3 ? <RankIcon size={26} className="drop-shadow-md" /> : `#${leader.rank}`}
                   </div>
-                  {leader.rank === 1 && <div className="absolute inset-0 rounded-2xl bg-yellow-400/50 blur-xl" />}
+                  {leader.rank === 1 && <div className={`absolute inset-0 rounded-2xl bg-yellow-400/50 ${isMobile ? 'blur-md' : 'blur-xl'}`} />}
                 </div>
 
                 <div className="w-16 h-16 rounded-full bg-emerald-100 overflow-hidden border-4 border-white shadow-md">
                   <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(leader.name)}&backgroundColor=e6f6ee`}
+                    src={getAvatarUrl(leader.name)}
                     alt={leader.name}
                     className="w-full h-full object-cover"
                   />
@@ -148,6 +151,14 @@ const Dashboard = () => {
   const [fetchError, setFetchError] = useState('');
   const [isClaimed, setIsClaimed] = useState(false);
   const [showClaimAnimation, setShowClaimAnimation] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch dashboard data from backend
   useEffect(() => {
@@ -192,7 +203,7 @@ const Dashboard = () => {
       // Start animation
       setShowClaimAnimation(true);
       confetti({
-        particleCount: 150,
+        particleCount: isMobile ? 80 : 150,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#FFD700', '#FFA500', '#FF4500']
@@ -308,8 +319,8 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <motion.div variants={item} className="card-pro rounded-[2rem] p-7 flex flex-col relative overflow-hidden">
             {/* Background Decorative Element */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-[100px] -mr-40 -mt-40" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 dark:bg-cyan-400/5 rounded-full blur-[80px] -ml-32 -mb-32" />
+            <div className={`absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full ${isMobile ? 'blur-[40px]' : 'blur-[100px]'} -mr-40 -mt-40`} />
+            <div className={`absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 dark:bg-cyan-400/5 rounded-full ${isMobile ? 'blur-[40px]' : 'blur-[80px]'} -ml-32 -mb-32`} />
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 relative z-10">
               <div className="flex items-center gap-4">
@@ -407,7 +418,7 @@ const Dashboard = () => {
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 z-50 flex items-center justify-center bg-white/90 dark:bg-white/90 backdrop-blur-md overflow-hidden"
                 >
-                  <FireworkParticles />
+                  <FireworkParticles isMobile={isMobile} />
                   <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -459,11 +470,12 @@ const Dashboard = () => {
         </div>
 
         {/* Full-width Leaderboard below both sections */}
-        <LeaderboardCard leaderboard={(dashData?.leaderboard || []).slice(0, 5)} currentRank={dashData?.rank} />
+        <LeaderboardCard leaderboard={(dashData?.leaderboard || []).slice(0, 5)} currentRank={dashData?.rank} isMobile={isMobile} />
 
       </motion.div>
     </div>
   );
 };
+
 
 export default Dashboard;

@@ -14,6 +14,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getAvatarUrl } from '../utils/avatar';
 
 import realLeaf from '../assets/logo/real-leaf.png';
 
@@ -263,8 +264,14 @@ const Navbar = () => {
 
               {user ? (
                 <div className="flex items-center gap-2 ml-1">
-                  <div className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 flex items-center gap-1.5" style={{ background: 'rgba(144,238,144,0.15)', border: '1px solid rgba(144,238,144,0.25)' }}>
-                    <User size={14} className="text-light-green-dark" />
+                  <div className="px-2 py-1.5 rounded-lg text-xs font-bold text-slate-600 flex items-center gap-2" style={{ background: 'rgba(144,238,144,0.15)', border: '1px solid rgba(144,238,144,0.25)' }}>
+                    <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-200">
+                      <img 
+                        src={getAvatarUrl(user.name)} 
+                        alt="User" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <span className="hidden lg:inline">{user.name?.split(' ')[0]}</span>
                   </div>
                   <motion.button

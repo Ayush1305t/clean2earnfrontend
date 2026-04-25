@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
 import { getApiUrl, getNetworkErrorMessage, parseApiResponse } from '../utils/api';
@@ -23,7 +24,9 @@ const Register = () => {
     setError('');
 
     if (form.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      const errorMsg = 'Password must be at least 6 characters';
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
       return;
     }
@@ -38,18 +41,24 @@ const Register = () => {
       const data = await parseApiResponse(res);
 
       if (!res.ok) {
-        setError(data.message || 'Registration failed');
+        const errorMsg = data.message || 'Registration unsuccessful, please try again';
+        setError(errorMsg);
+        toast.error(errorMsg);
         setLoading(false);
         return;
       }
 
+      toast.success('Account created successfully!');
       login(data.user, data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(getNetworkErrorMessage(err, 'Server error. Please try again.'));
+      const errorMsg = getNetworkErrorMessage(err, 'Registration unsuccessful, please try again');
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex items-center justify-center min-h-[80vh]">
